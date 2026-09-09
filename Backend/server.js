@@ -141,7 +141,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/user/profile', verifyToken, async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT id, name, email, role, phone, roll_number, department, year_of_study, semester, division_batch FROM users WHERE id = ?', [req.user.id]);
+    const [users] = await pool.query('SELECT id, name, email, role, phone, roll_number, department, year_of_study, semester, division_batch, employee_id, designation, specialization FROM users WHERE id = ?', [req.user.id]);
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json(users[0]);
   } catch (err) {
@@ -151,11 +151,11 @@ app.get('/api/user/profile', verifyToken, async (req, res) => {
 
 app.put('/api/user/profile', verifyToken, async (req, res) => {
   try {
-    const { name, phone, department, year_of_study, semester, division_batch } = req.body;
+    const { name, phone, department, year_of_study, semester, division_batch, designation, specialization } = req.body;
     await pool.query(`
-      UPDATE users SET name = ?, phone = ?, department = ?, year_of_study = ?, semester = ?, division_batch = ?
+      UPDATE users SET name = ?, phone = ?, department = ?, year_of_study = ?, semester = ?, division_batch = ?, designation = ?, specialization = ?
       WHERE id = ?
-    `, [name, phone, department, year_of_study, semester, division_batch, req.user.id]);
+    `, [name, phone, department, year_of_study, semester, division_batch, designation, specialization, req.user.id]);
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update profile' });
@@ -311,6 +311,23 @@ app.get('/api/student/review/:resultId', verifyToken, async (req, res) => {
 
 // ==================== FACULTY ROUTES ====================
 
+app.get('/api/faculty/stats', verifyToken, async (req, res) => {
+  try {
+    const [testCount] = await pool.query('SELECT COUNT(*) AS total FROM tests');
+    const [studentCount] = await pool.query('SELECT COUNT(*) AS total FROM users WHERE role = "Student"');
+    const [subCount] = await pool.query('SELECT COUNT(*) AS total FROM results');
+
+    res.json({
+      totalTests: testCount[0].total || 0,
+      totalStudents: studentCount[0].total || 0,
+      totalSubmissions: subCount[0].total || 0
+    });
+  } catch (err) {
+    console.error('Error fetching faculty stats:', err);
+    res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+  }
+});
+
 app.get('/api/faculty/dashboard', verifyToken, async (req, res) => {
   try {
     const [testCount] = await pool.query('SELECT COUNT(*) AS total FROM tests');
@@ -366,11 +383,37 @@ app.post('/api/faculty/tests', verifyToken, async (req, res) => {
   }
 });
 
+app.delete('/api/faculty/tests/:id', verifyToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM tests WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Assessment deleted successfully.' });
+  } catch (err) {
+    console.error('Delete Test Error:', err);
+    res.status(500).json({ error: 'Failed to delete assessment.' });
+  }
+});
+
+app.get('/api/faculty/students', verifyToken, async (req, res) => {
+  try {
+    const [students] = await pool.query(`
+      SELECT 
+        u.id, u.name, u.email, u.phone, u.roll_number, u.department, u.semester, u.division_batch,
+        (SELECT COUNT(*) FROM results r WHERE r.student_id = u.id) AS tests_taken
+      FROM users u
+      WHERE u.role = 'Student'
+    `);
+    res.json(students);
+  } catch (err) {
+    console.error('Fetch Students Error:', err);
+    res.status(500).json({ error: 'Failed to fetch students directory.' });
+  }
+});
+
 app.get('/api/faculty/reports', verifyToken, async (req, res) => {
   try {
     const [reports] = await pool.query(`
       SELECT 
-        r.id AS result_id,
+        r.id AS submission_id,
         u.name AS student_name,
         u.email AS student_email,
         u.roll_number,
@@ -387,7 +430,18 @@ app.get('/api/faculty/reports', verifyToken, async (req, res) => {
     `);
     res.json(reports);
   } catch (err) {
+    console.error('Fetch Reports Error:', err);
     res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+app.delete('/api/faculty/submissions/:id/reset', verifyToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM results WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Previous submission reset successfully. Student can now retake the test.' });
+  } catch (err) {
+    console.error('Reset Submission Error:', err);
+    res.status(500).json({ error: 'Failed to reset student attempt.' });
   }
 });
 
