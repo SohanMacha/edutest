@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('loginPassword').value;
 
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/auth/login', {
+        const response = await fetch('https://edutest-0y0z.onrender.com/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/auth/register', {
+        const response = await fetch('https://edutest-0y0z.onrender.com/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)

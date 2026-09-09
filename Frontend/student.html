@@ -689,7 +689,7 @@
 
       async function loadTests() {
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/student/tests', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/student/tests', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const tests = await res.json();
@@ -748,7 +748,7 @@
 
       window.startExam = async function(testId, title, durationMins) {
         try {
-          const res = await fetch(`http://127.0.0.1:5000/api/tests/${testId}/questions`, {
+          const res = await fetch(`https://edutest-0y0z.onrender.com/api/tests/${testId}/questions`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
 
@@ -878,7 +878,7 @@
         });
 
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/results', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/results', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -925,7 +925,7 @@
 
       window.loadHistory = async function() {
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/student/history', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/student/history', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const history = await res.json();
@@ -971,7 +971,7 @@
 
         let studentDetails = { name: localStorage.getItem('name') || 'Student', roll_number: 'N/A', department: 'N/A' };
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) studentDetails = await res.json();
@@ -1050,7 +1050,7 @@
 
       window.openReviewModal = async function(resultId) {
         try {
-          const res = await fetch(`http://127.0.0.1:5000/api/student/review/${resultId}`, {
+          const res = await fetch(`https://edutest-0y0z.onrender.com/api/student/review/${resultId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const breakdown = await res.json();
@@ -1085,7 +1085,7 @@
 
       window.loadStudentProfile = async function() {
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const user = await res.json();
@@ -1115,7 +1115,7 @@
         };
 
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

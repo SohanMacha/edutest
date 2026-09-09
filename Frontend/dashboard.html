@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduTest - Faculty Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTest</title>
+    
+    <!-- Paste your links here -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* your custom styles here */
+    </style>
+</head>
     :root {
       --primary: #10b981;
       --primary-dark: #059669;
-      --bg-dark: #0f172a;
+      --bg-dark: #666b75;
       --card-bg: #1e293b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
@@ -1105,7 +1111,7 @@
 
       async function loadData() {
         try {
-          const statsRes = await fetch('http://127.0.0.1:5000/api/faculty/stats', {
+          const statsRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/stats', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (statsRes.ok) {
@@ -1115,7 +1121,7 @@
             document.getElementById('totalSubmissions').textContent = stats.totalSubmissions ?? 0;
           }
 
-          const testsRes = await fetch('http://127.0.0.1:5000/api/student/tests', {
+          const testsRes = await fetch('https://edutest-0y0z.onrender.com/api/student/tests', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (testsRes.ok) {
@@ -1153,7 +1159,7 @@
             }
           }
 
-          const studentsRes = await fetch('http://127.0.0.1:5000/api/faculty/students', {
+          const studentsRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/students', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (studentsRes.ok) {
@@ -1178,7 +1184,7 @@
             }
           }
 
-          const subRes = await fetch('http://127.0.0.1:5000/api/faculty/submissions', {
+          const subRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/submissions', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (subRes.ok) {
@@ -1196,7 +1202,7 @@
         if (!confirmed) return;
 
         try {
-          const res = await fetch(`http://127.0.0.1:5000/api/faculty/tests/${testId}`, {
+          const res = await fetch(`https://edutest-0y0z.onrender.com/api/faculty/tests/${testId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -1263,7 +1269,7 @@
         if (!confirmAction) return;
 
         try {
-          const res = await fetch(`http://127.0.0.1:5000/api/faculty/submissions/${submissionId}/reset`, {
+          const res = await fetch(`https://edutest-0y0z.onrender.com/api/faculty/submissions/${submissionId}/reset`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -1282,7 +1288,7 @@
 
       window.loadUserProfile = async function() {
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const user = await res.json();
@@ -1310,7 +1316,7 @@
         };
 
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -1375,7 +1381,7 @@
         };
 
         try {
-          const res = await fetch('http://127.0.0.1:5000/api/faculty/tests', {
+          const res = await fetch('https://edutest-0y0z.onrender.com/api/faculty/tests', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
