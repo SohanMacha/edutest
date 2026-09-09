@@ -11,12 +11,13 @@ app.use(cors());
 
 const JWT_SECRET = 'edutest_super_secret_key_2026';
 
-// MySQL Database Connection Pool
+// MySQL Database Connection Pool (Using Environment Variables for Production)
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'root123', // Put your MySQL password here if needed
-  database: 'online_test_system',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'online_test_system',
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -26,7 +27,7 @@ const pool = mysql.createPool({
 async function testDbConnection() {
   try {
     const connection = await pool.getConnection();
-    console.log('Successfully connected to MySQL database: online_test_system');
+    console.log(`Successfully connected to MySQL database: ${process.env.DB_NAME || 'online_test_system'}`);
     connection.release();
   } catch (err) {
     console.error('Database connection failed:', err.message);
@@ -163,7 +164,6 @@ app.put('/api/user/profile', verifyToken, async (req, res) => {
 
 // ==================== STUDENT ROUTES ====================
 
-// Get Active / Scheduled Tests for Students (Using student_id)
 app.get('/api/student/tests', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -197,7 +197,6 @@ app.get('/api/tests/:id/questions', verifyToken, async (req, res) => {
   }
 });
 
-// Submit Exam & Auto-Grade (Using student_id)
 app.post('/api/results', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -266,7 +265,6 @@ app.post('/api/results', verifyToken, async (req, res) => {
   }
 });
 
-// Student History Endpoint (Using student_id)
 app.get('/api/student/history', verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -394,7 +392,7 @@ app.get('/api/faculty/reports', verifyToken, async (req, res) => {
 });
 
 // Start Server
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://127.0.0.1:${PORT}`);
+  console.log(`Backend server running on port ${PORT}`);
 });
