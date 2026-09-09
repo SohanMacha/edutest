@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduTest - Student Exam Portal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 16px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-links {
+      list-style: none;
+      margin-top: 20px;
+    }
+
+    .nav-item {
+      width: 100%;
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-align: left;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+    }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--danger);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      font-weight: 600;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 32px 48px;
+      overflow-y: auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .test-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .test-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .test-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 14px;
+    }
+
+    .btn-start {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
+    }
+
+    .btn-start:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-review {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--info);
+      color: var(--info);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-review:hover {
+      background: var(--info);
+      color: #0f172a;
+    }
+
+    .btn-completed {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-align: center;
+      cursor: not-allowed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+
+    td {
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    #examSection {
+      display: none;
+      user-select: none;
+    }
+
+    .exam-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 24px;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .timer-badge {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .integrity-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--warning);
+      color: var(--warning);
+      padding: 10px 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .exam-question-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin: 8px 0;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-label:hover {
+      border-color: var(--primary);
+    }
+
+    .option-label input[type="checkbox"] {
+      accent-color: var(--primary);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 26px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    .review-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .score-circle {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px auto;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .cheat-warning-box {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>EduTest</span>
+      </div>
+      <ul class="nav-links">
+        <li>
+          <button type="button" class="nav-item active" onclick="switchStudentSection('tabAssessments', this)">
+            <i class="fa-solid fa-book-open"></i> Available Tests
+          </button>
+        </li>
+        <li>
+          <button type="button" class="nav-item" onclick="switchStudentSection('tabHistory', this); loadHistory();">
+            <i class="fa-solid fa-clock-rotate-left"></i> My Results History
+          </button>
+        </li>
+        <li>
+          <button type="button" class="nav-item" onclick="switchStudentSection('tabProfile', this); loadStudentProfile();">
+            <i class="fa-solid fa-id-card"></i> Student Profile
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <button class="btn-logout" id="logoutBtn">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      Logout
+    </button>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div>
+        <h2 id="studentHeading">Student Examination Portal</h2>
+        <p id="studentSubheading" style="color: var(--text-muted); font-size: 0.9rem;">Select an available assessment to begin your timed test</p>
+      </div>
+
+      <div class="user-profile">
+        <div class="avatar" id="avatarLetter">S</div>
+        <div style="display: flex; flex-direction: column;">
+          <strong id="studentName">Student User</strong>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Student</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1: ASSESSMENTS -->
+    <section id="tabAssessments" class="student-view" style="display: block;">
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-layer-group"></i> Active Assessments</h3>
+        <div class="test-grid" id="testList">
+          <p style="color: var(--text-muted);">Loading available exams...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: RESULTS HISTORY -->
+    <section id="tabHistory" class="student-view" style="display: none;">
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-square-poll-vertical"></i> Past Performance & Answer Keys</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Assessment Title</th>
+              <th>Score</th>
+              <th>Percentage</th>
+              <th>Cheat Warnings</th>
+              <th>Date Taken</th>
+              <th>Review & Marksheet</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: STUDENT PROFILE -->
+    <section id="tabProfile" class="student-view" style="display: none;">
+      <div class="panel-card" style="max-width: 680px;">
+        <h3><i class="fa-solid fa-user-graduate"></i> My Academic Profile</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+          Review and update your enrolled student information.
+        </p>
+
+        <form id="studentProfileForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profStuName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Roll Number (Locked)</label>
+              <input type="text" id="profStuRoll" class="form-control" disabled style="opacity: 0.6; cursor: not-allowed;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Email Address (Locked)</label>
+              <input type="email" id="profStuEmail" class="form-control" disabled style="opacity: 0.6; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+              <label>Contact Phone</label>
+              <input type="tel" id="profStuPhone" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Department / Branch</label>
+            <input type="text" id="profStuDept" class="form-control" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label>Year of Study</label>
+              <select id="profStuYear" class="form-control">
+                <option value="First Year">First Year</option>
+                <option value="Second Year">Second Year</option>
+                <option value="Third Year">Third Year</option>
+                <option value="Final Year">Final Year</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Semester</label>
+              <input type="text" id="profStuSem" class="form-control" placeholder="e.g. Sem 4">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Division / Batch</label>
+            <input type="text" id="profStuBatch" class="form-control" placeholder="e.g. Div A / Batch B2">
+          </div>
+
+          <button type="submit" class="btn-start" style="margin-top: 10px; padding: 10px 20px;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Profile Details
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- EXAM TAKE SECTION -->
+    <section id="examSection">
+      <div class="exam-header">
+        <div>
+          <h2 id="activeExamTitle">Assessment Title</h2>
+          <span style="color: var(--text-muted); font-size: 0.85rem;">Notice: One or more options may be correct. Check all applicable answers.</span>
+        </div>
+        <div class="timer-badge">
+          <i class="fa-regular fa-clock"></i>
+          <span id="timeRemaining">00:00</span>
+        </div>
+      </div>
+
+      <div class="integrity-bar">
+        <span><i class="fa-solid fa-shield-halved"></i> Proctoring Active: Tab switches & copy-paste are monitored.</span>
+        <span id="warningCounter" style="color: var(--danger);">Warnings: 0 / 3</span>
+      </div>
+
+      <form id="examForm">
+        <div id="questionsContainer"></div>
+        <button type="submit" class="btn-start" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">
+          Submit Exam Now
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <!-- RESULT MODAL -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal" style="max-width: 440px; text-align: center;">
+      <h2 style="margin-bottom: 8px;">Assessment Completed!</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Your responses have been recorded in the database.</p>
+      
+      <div id="cheatWarningBadge" class="cheat-warning-box" style="display: none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="cheatWarningText">Integrity violations logged!</span>
+      </div>
+
+      <div class="score-circle" id="scoreDisplay">0 / 0</div>
+      <p id="scorePercentage" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 24px;">0%</p>
+      <button class="btn-start" style="width: 100%;" onclick="window.location.reload()">Back to Assessments</button>
+    </div>
+  </div>
+
+  <!-- QUESTION-BY-QUESTION REVIEW MODAL -->
+  <div class="modal-overlay" id="reviewModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Exam Detailed Breakdown</h3>
+        <button class="btn-close" onclick="document.getElementById('reviewModal').style.display = 'none';">&times;</button>
+      </div>
+      <div id="reviewContainer">
+        <p style="color: var(--text-muted);">Loading answers...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval = null;
+    let currentTestId = null;
+    let tabSwitchCount = 0;
+    const MAX_WARNINGS = 3;
+    let isExamActive = false;
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    window.switchStudentSection = function(sectionId, btn) {
+      document.querySelectorAll('.student-view').forEach(s => s.style.display = 'none');
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+      const target = document.getElementById(sectionId);
+      if (target) target.style.display = 'block';
+      if (btn) btn.classList.add('active');
+
+      if (sectionId === 'tabAssessments') {
+        document.getElementById('studentHeading').textContent = 'Student Examination Portal';
+        document.getElementById('studentSubheading').textContent = 'Select an available assessment to begin your timed test';
+      } else if (sectionId === 'tabHistory') {
+        document.getElementById('studentHeading').textContent = 'My Assessment Performance';
+        document.getElementById('studentSubheading').textContent = 'View your scores, review answers, and download official PDF marksheets';
+      } else {
+        document.getElementById('studentHeading').textContent = 'My Academic Profile';
+        document.getElementById('studentSubheading').textContent = 'Review and modify your registered academic records';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+
+      if (!token) {
+        window.location.href = 'index.html';
+        return;
+      }
+      if (role && role.toLowerCase() !== 'student') {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const storedName = localStorage.getItem('name');
+      const displayName = (storedName && storedName.trim() !== '') ? storedName : 'Student User';
+      document.getElementById('studentName').textContent = displayName;
+      document.getElementById('avatarLetter').textContent = displayName.charAt(0).toUpperCase();
+
+      const testList = document.getElementById('testList');
+      const examSection = document.getElementById('examSection');
+      const questionsContainer = document.getElementById('questionsContainer');
+      const examForm = document.getElementById('examForm');
+
+      async function loadTests() {
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/student/tests', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const tests = await res.json();
+
+          if (!tests || tests.length === 0) {
+            testList.innerHTML = `<p style="color: var(--text-muted);">No active assessments scheduled right now.</p>`;
+            return;
+          }
+
+          testList.innerHTML = tests.map(t => {
+            let actionHtml = '';
+
+            if (t.is_completed === 1) {
+              actionHtml = `
+                <div class="btn-completed">
+                  <i class="fa-solid fa-circle-check"></i> Completed (Score: ${t.score}/${t.total_marks})
+                </div>
+              `;
+            } else if (t.test_state === 'UPCOMING') {
+              actionHtml = `
+                <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: var(--warning); padding: 10px; border-radius: 6px; font-weight: 600; text-align: center;">
+                  <i class="fa-regular fa-clock"></i> Starts on ${new Date(t.start_date).toLocaleDateString()}
+                </div>
+              `;
+            } else if (t.test_state === 'EXPIRED') {
+              actionHtml = `
+                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 10px; border-radius: 6px; font-weight: 600; text-align: center;">
+                  <i class="fa-solid fa-lock"></i> Assessment Expired
+                </div>
+              `;
+            } else {
+              actionHtml = `
+                <button class="btn-start" onclick="startExam(${t.id}, '${escape(t.title)}', ${t.duration_mins})">
+                  Take Assessment
+                </button>
+              `;
+            }
+
+            return `
+              <div class="test-item">
+                <div>
+                  <div class="test-title">${t.title}</div>
+                  <div class="test-meta" style="margin-top: 8px;">
+                    <span><i class="fa-regular fa-clock"></i> ${t.duration_mins} mins</span>
+                    <span><i class="fa-solid fa-calendar-days"></i> Due ${new Date(t.end_date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                ${actionHtml}
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          testList.innerHTML = `<p style="color: var(--danger);">Failed to load tests from server.</p>`;
+        }
+      }
+
+      window.startExam = async function(testId, title, durationMins) {
+        try {
+          const res = await fetch(`http://127.0.0.1:5000/api/tests/${testId}/questions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+            alert(errData.error || 'Failed to load questions for this test.');
+            return;
+          }
+
+          const rawQuestions = await res.json();
+          if (rawQuestions.length === 0) {
+            alert('This test has no questions added yet.');
+            return;
+          }
+
+          const randomizedQuestions = shuffleArray(rawQuestions);
+
+          currentTestId = testId;
+          tabSwitchCount = 0;
+          isExamActive = true;
+          document.getElementById('activeExamTitle').textContent = unescape(title);
+
+          questionsContainer.innerHTML = randomizedQuestions.map((q, idx) => {
+            const options = shuffleArray([
+              { key: 'A', text: q.option_a },
+              { key: 'B', text: q.option_b },
+              { key: 'C', text: q.option_c },
+              { key: 'D', text: q.option_d }
+            ]);
+
+            return `
+              <div class="exam-question-card">
+                <h4 style="margin-bottom: 6px;">Q${idx + 1}. ${q.question_text}</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">(Select all correct options)</p>
+                ${options.map(opt => `
+                  <label class="option-label">
+                    <input type="checkbox" name="q_${q.id}" value="${opt.key}">
+                    <span><strong>[${opt.key}]</strong> ${opt.text}</span>
+                  </label>
+                `).join('')}
+              </div>
+            `;
+          }).join('');
+
+          document.querySelectorAll('.student-view').forEach(v => v.style.display = 'none');
+          examSection.style.display = 'block';
+
+          startTimer(durationMins * 60);
+        } catch (err) {
+          alert('Network error connecting to assessment.');
+        }
+      };
+
+      function startTimer(totalSeconds) {
+        const timerDisplay = document.getElementById('timeRemaining');
+        let remaining = totalSeconds;
+
+        function updateDisplay() {
+          const mins = Math.floor(remaining / 60);
+          const secs = remaining % 60;
+          timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+          if (remaining <= 0) {
+            clearInterval(timerInterval);
+            alert('Time has expired! Submitting your responses.');
+            submitAnswers();
+          }
+          remaining--;
+        }
+
+        updateDisplay();
+        timerInterval = setInterval(updateDisplay, 1000);
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (!isExamActive) return;
+
+        if (document.hidden) {
+          tabSwitchCount++;
+          document.getElementById('warningCounter').textContent = `Warnings: ${tabSwitchCount} / ${MAX_WARNINGS}`;
+
+          if (tabSwitchCount >= MAX_WARNINGS) {
+            alert('Maximum integrity violations reached (3/3). Exam auto-submitted.');
+            submitAnswers();
+          } else {
+            alert(`Integrity Warning (${tabSwitchCount}/${MAX_WARNINGS}): Switching tabs or leaving the exam screen is flagged!`);
+          }
+        }
+      });
+
+      document.addEventListener('contextmenu', (e) => {
+        if (isExamActive) e.preventDefault();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (!isExamActive) return;
+        if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u')) || e.key === 'F12') {
+          e.preventDefault();
+          alert('Copy, paste, inspect, and source view are blocked during examination.');
+        }
+      });
+
+      async function submitAnswers() {
+        isExamActive = false;
+        clearInterval(timerInterval);
+
+        const answers = {};
+        const checkboxes = examForm.querySelectorAll('input[type="checkbox"]:checked');
+
+        checkboxes.forEach(cb => {
+          const questionId = cb.name.replace('q_', '');
+          if (!answers[questionId]) {
+            answers[questionId] = [];
+          }
+          answers[questionId].push(cb.value);
+        });
+
+        const allCards = examForm.querySelectorAll('.exam-question-card');
+        allCards.forEach(card => {
+          const anyInput = card.querySelector('input[type="checkbox"]');
+          if (anyInput) {
+            const qId = anyInput.name.replace('q_', '');
+            if (!answers[qId]) {
+              answers[qId] = [];
+            }
+          }
+        });
+
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/results', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              test_id: currentTestId,
+              answers: answers,
+              warnings_count: tabSwitchCount
+            })
+          });
+
+          const result = await res.json();
+
+          if (res.ok) {
+            const cheatBadge = document.getElementById('cheatWarningBadge');
+            const cheatText = document.getElementById('cheatWarningText');
+
+            if (tabSwitchCount > 0) {
+              cheatText.textContent = `Warning: ${tabSwitchCount} cheating / tab-switch violation(s) flagged to instructor!`;
+              cheatBadge.style.display = 'flex';
+            } else {
+              cheatBadge.style.display = 'none';
+            }
+
+            document.getElementById('scoreDisplay').textContent = `${result.score} / ${result.total_marks}`;
+            const pct = Math.round((result.score / result.total_marks) * 100);
+            document.getElementById('scorePercentage').textContent = `${pct}% (${pct >= 40 ? 'Passed' : 'Failed'})`;
+            document.getElementById('scorePercentage').style.color = pct >= 40 ? 'var(--primary)' : 'var(--danger)';
+            document.getElementById('resultModal').style.display = 'flex';
+          } else {
+            alert(result.error || 'Submission failed');
+            window.location.reload();
+          }
+        } catch (err) {
+          alert('Error submitting exam.');
+        }
+      }
+
+      examForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitAnswers();
+      });
+
+      window.loadHistory = async function() {
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/student/history', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const history = await res.json();
+          const tbody = document.getElementById('historyTableBody');
+
+          if (!history || history.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No assessments taken yet.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = history.map(h => `
+            <tr>
+              <td><strong>${h.test_title}</strong></td>
+              <td>${h.score} / ${h.total_marks}</td>
+              <td><strong>${h.percentage}%</strong></td>
+              <td>
+                ${h.warnings_count > 0 
+                  ? `<span style="color: var(--danger); font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> ${h.warnings_count} Flag(s)</span>`
+                  : `<span style="color: var(--primary); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Clean</span>`
+                }
+              </td>
+              <td>${new Date(h.created_at).toLocaleDateString()}</td>
+              <td style="display: flex; gap: 8px;">
+                <button class="btn-review" onclick="openReviewModal(${h.result_id})">
+                  <i class="fa-solid fa-magnifying-glass"></i> Review
+                </button>
+                <button class="btn-review" style="background: rgba(16, 185, 129, 0.15); border-color: var(--primary); color: var(--primary);" 
+                        onclick="generateMarksheet('${escape(h.test_title)}', ${h.score}, ${h.total_marks}, ${h.percentage}, '${h.created_at}')">
+                  <i class="fa-solid fa-file-arrow-down"></i> PDF
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      // PDF Marksheet Generator Function using jsPDF
+      window.generateMarksheet = async function(testTitle, score, totalMarks, percentage, dateTaken) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let studentDetails = { name: localStorage.getItem('name') || 'Student', roll_number: 'N/A', department: 'N/A' };
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) studentDetails = await res.json();
+        } catch (e) {
+          console.error('Failed to load profile for PDF', e);
+        }
+
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, 210, 40, 'F');
+
+        doc.setTextColor(16, 185, 129);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("EDUTEST EXAMINATION PORTAL", 20, 20);
+
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Official Statement of Examination Performance & Grade Transcript", 20, 28);
+
+        doc.setDrawColor(203, 213, 225);
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(20, 50, 170, 45, 3, 3, 'FD');
+
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("Candidate Name:", 25, 60);
+        doc.text("Roll / ID Number:", 25, 70);
+        doc.text("Department:", 25, 80);
+
+        doc.setFont("helvetica", "normal");
+        doc.text(studentDetails.name || 'N/A', 70, 60);
+        doc.text(studentDetails.roll_number || 'N/A', 70, 70);
+        doc.text(studentDetails.department || 'N/A', 70, 80);
+
+        doc.setFont("helvetica", "bold");
+        doc.text("Date Taken:", 120, 60);
+        doc.setFont("helvetica", "normal");
+        doc.text(new Date(dateTaken).toLocaleDateString(), 150, 60);
+
+        doc.setFillColor(16, 185, 129);
+        doc.rect(20, 105, 170, 10, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Assessment Title", 25, 111);
+        doc.text("Max Marks", 105, 111);
+        doc.text("Marks Scored", 135, 111);
+        doc.text("Percentage", 165, 111);
+
+        doc.setTextColor(30, 41, 59);
+        doc.setFont("helvetica", "normal");
+        doc.text(unescape(testTitle), 25, 125);
+        doc.text(String(totalMarks), 110, 125);
+        doc.text(String(score), 140, 125);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${percentage}%`, 167, 125);
+
+        doc.line(20, 133, 190, 133);
+
+        const passed = percentage >= 40;
+        doc.setFontSize(14);
+        doc.setTextColor(passed ? 16 : 239, passed ? 185 : 68, passed ? 129 : 68);
+        doc.text(`VERDICT: ${passed ? 'PASSED / SATISFACTORY' : 'FAILED / NEEDS RETAKE'}`, 20, 150);
+
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "italic");
+        doc.text("This document is computer-generated and verified by EduTest Proctoring Engine.", 20, 270);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 276);
+
+        doc.save(`${studentDetails.name.replace(/\s+/g, '_')}_Marksheet.pdf`);
+      };
+
+      window.openReviewModal = async function(resultId) {
+        try {
+          const res = await fetch(`http://127.0.0.1:5000/api/student/review/${resultId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const breakdown = await res.json();
+          const container = document.getElementById('reviewContainer');
+
+          if (!breakdown || breakdown.length === 0) {
+            container.innerHTML = `<p style="color: var(--text-muted);">No review data found.</p>`;
+          } else {
+            container.innerHTML = breakdown.map((item, idx) => {
+              const chosenSorted = item.chosen_option ? item.chosen_option.split(',').map(s=>s.trim()).sort().join(', ') : 'None';
+              const correctSorted = item.correct_option ? item.correct_option.split(',').map(s=>s.trim()).sort().join(', ') : '';
+              const isCorrect = chosenSorted === correctSorted;
+
+              return `
+                <div class="review-item" style="border-left: 4px solid ${isCorrect ? 'var(--primary)' : 'var(--danger)'};">
+                  <h4 style="margin-bottom: 8px;">Q${idx + 1}. ${item.question_text}</h4>
+                  <p style="font-size: 0.9rem; margin-bottom: 4px;">
+                    Your Choice(s): <strong style="color: ${isCorrect ? 'var(--primary)' : 'var(--danger)'};">[${chosenSorted}]</strong> 
+                    ${isCorrect ? '<i class="fa-solid fa-circle-check" style="color: var(--primary);"></i>' : '<i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>'}
+                  </p>
+                  ${!isCorrect ? `<p style="font-size: 0.9rem; color: var(--primary);">Correct Answer(s): <strong>[${correctSorted}]</strong></p>` : ''}
+                </div>
+              `;
+            }).join('');
+          }
+
+          document.getElementById('reviewModal').style.display = 'flex';
+        } catch (err) {
+          alert('Failed to load answer breakdown.');
+        }
+      };
+
+      window.loadStudentProfile = async function() {
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const user = await res.json();
+
+          document.getElementById('profStuName').value = user.name || '';
+          document.getElementById('profStuEmail').value = user.email || '';
+          document.getElementById('profStuRoll').value = user.roll_number || 'N/A';
+          document.getElementById('profStuPhone').value = user.phone || '';
+          document.getElementById('profStuDept').value = user.department || '';
+          document.getElementById('profStuYear').value = user.year_of_study || 'First Year';
+          document.getElementById('profStuSem').value = user.semester || '';
+          document.getElementById('profStuBatch').value = user.division_batch || '';
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      document.getElementById('studentProfileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          name: document.getElementById('profStuName').value.trim(),
+          phone: document.getElementById('profStuPhone').value.trim(),
+          department: document.getElementById('profStuDept').value.trim(),
+          year_of_study: document.getElementById('profStuYear').value,
+          semester: document.getElementById('profStuSem').value.trim(),
+          division_batch: document.getElementById('profStuBatch').value.trim()
+        };
+
+        try {
+          const res = await fetch('http://127.0.0.1:5000/api/user/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            localStorage.setItem('name', payload.name);
+            document.getElementById('studentName').textContent = payload.name;
+            alert('Academic profile updated successfully!');
+          } else {
+            alert('Failed to update profile.');
+          }
+        } catch (err) {
+          alert('Network error updating profile.');
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+
+      loadTests();
+    });
+  </script>
+</body>
+</html>
