@@ -11,25 +11,40 @@ app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 
-// Database connection pool setup with cloud SSL support
 const dbUri = process.env.DATABASE_URL;
-const pool = dbUri 
-  ? mysql.createPool({
+console.log('Environment DATABASE_URL is set:', !!dbUri);
+
+const poolConfig = dbUri 
+  ? {
       uri: dbUri,
       ssl: { rejectUnauthorized: false },
       waitForConnections: true,
       connectionLimit: 10,
-      queueLimit: 0
-    })
-  : mysql.createPool({
+      queueLimit: 0,
+      connectTimeout: 20000
+    }
+  : {
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'edutest',
       waitForConnections: true,
       connectionLimit: 10,
-      queueLimit: 0
-    });
+      queueLimit: 0,
+      connectTimeout: 20000
+    };
+
+const pool = mysql.createPool(poolConfig);
+
+// Diagnostic test on startup
+pool.getConnection()
+  .then(conn => {
+    console.log('✅ Connected to MySQL Database successfully');
+    conn.release();
+  })
+  .catch(err => {
+    console.error('❌ Database Connection Error:', err.message);
+  });
 
 // Auth Middleware
 function authenticateToken(req, res, next) {
@@ -66,7 +81,6 @@ app.post('/api/auth/login', async (req, res) => {
     if (users.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
     const user = users[0];
     
-    // Support bcrypt or fallback comparison
     let valid = false;
     try { valid = await bcrypt.compare(password, user.password); } catch(e) {}
     if (!valid && password !== user.password) {
