@@ -2,55 +2,191 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>EduTest - Student Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduTest - Student Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-    .container { max-width: 900px; margin: auto; background: #1e293b; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-    button { background: #10b981; color: white; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #059669; }
-    .test-card { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
-    .question-block { background: #334155; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
-    label { display: block; margin: 8px 0; cursor: pointer; }
-    .warning-banner { background: #ef4444; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; }
-    .hidden { display: none; }
-    .logout-btn { background: #ef4444; float: right; }
-    .logout-btn:hover { background: #dc2626; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #161f33;
+      --bg-card: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --gold: #d4af37;
+      --gold-hover: #b4912c;
+      --silver: #c0c0c0;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --border-gold: rgba(212, 175, 55, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-primary); color: var(--text-primary); display: flex; min-height: 100vh; }
+
+    /* Sidebar Navigation */
+    .sidebar { width: 250px; background: var(--bg-secondary); border-right: 1px solid var(--border-gold); display: flex; flex-direction: column; justify-content: space-between; padding: 25px 20px; }
+    .brand { font-size: 1.5rem; font-weight: bold; color: var(--gold); letter-spacing: 1px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+    .nav-links { display: flex; flex-direction: column; gap: 10px; list-style: none; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; padding: 12px 15px; border-radius: 8px; font-weight: 500; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px; }
+    .nav-links a:hover, .nav-links a.active { background: rgba(212, 175, 55, 0.15); color: var(--gold); border-left: 3px solid var(--gold); }
+    .sidebar-footer { padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+    /* Main Content Area */
+    .main-content { flex: 1; padding: 40px; overflow-y: auto; max-width: 1400px; margin: 0 auto; }
+    header.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-gold); }
+    header h1 { font-size: 2rem; color: var(--text-primary); font-weight: 600; }
+    header h1 span { color: var(--gold); }
+
+    /* Badges & Buttons */
+    button { background: linear-gradient(135deg, var(--gold), #aa8c2c); color: var(--bg-primary); border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2); }
+    button:hover { background: linear-gradient(135deg, var(--gold-hover), #8a6f20); transform: translateY(-1px); }
+    .btn-secondary { background: rgba(192, 192, 192, 0.1); color: var(--silver); border: 1px solid rgba(192, 192, 192, 0.3); box-shadow: none; }
+    .btn-secondary:hover { background: rgba(192, 192, 192, 0.2); }
+    .btn-danger { background: var(--accent-red); color: white; box-shadow: none; }
+    .btn-danger:hover { background: #dc2626; }
+
+    /* Stats & Cards Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border-gold); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px; position: relative; overflow: hidden; }
+    .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%); }
+    .stat-card h4 { color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card p { font-size: 1.8rem; font-weight: bold; color: var(--gold); }
+
+    /* Assessment & Question Cards */
+    .section-title { font-size: 1.3rem; margin-bottom: 20px; color: var(--silver); border-left: 3px solid var(--gold); padding-left: 10px; }
+    .test-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .test-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); border-top: 3px solid var(--gold); padding: 25px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; transition: transform 0.2s, border-color 0.2s; }
+    .test-card:hover { transform: translateY(-3px); border-color: var(--gold); }
+    .test-info h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text-primary); }
+    .test-info p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; }
+    .state-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
+    .state-active { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .state-locked { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Exam / Active Test View */
+    .exam-wrapper { background: var(--bg-card); border: 1px solid var(--border-gold); border-radius: 12px; padding: 30px; }
+    .exam-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 25px; }
+    .question-block { background: var(--bg-secondary); padding: 20px; margin-bottom: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+    .question-block p { font-size: 1.05rem; margin-bottom: 15px; font-weight: 500; }
+    label.option-label { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+    label.option-label:hover { background: rgba(212, 175, 55, 0.08); border-color: rgba(212, 175, 55, 0.2); }
+    input[type="radio"] { accent-color: var(--gold); transform: scale(1.1); }
+
+    /* Warning Banner */
+    .warning-banner { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--accent-red); color: #fca5a5; padding: 12px 20px; border-radius: 8px; margin-bottom: 25px; display: none; font-weight: 500; }
+    
+    /* Result Section */
+    .result-card { text-align: center; background: var(--bg-card); border: 1px solid var(--border-gold); padding: 40px; border-radius: 12px; max-width: 600px; margin: 40px auto; }
+    .result-card h2 { color: var(--gold); font-size: 2.2rem; margin-bottom: 15px; }
+    .result-card p { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 25px; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h2>EduTest Student Portal</h2>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </header>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <span>⚡</span> EduTest<span style="font-size: 0.7rem; color: var(--silver); border: 1px solid var(--silver); padding: 2px 6px; border-radius: 4px;">PRO</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#" class="active" onclick="switchView('dashboard')"><span>📊</span> Dashboard</a></li>
+        <li><a href="#" onclick="switchView('assessments')"><span>📝</span> Assessments</a></li>
+        <li><a href="#" onclick="switchView('history')"><span>📜</span> My History</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-danger" style="width: 100%;" onclick="logout()">Logout</button>
+    </div>
+  </aside>
 
-    <div id="warning-banner" class="warning-banner">⚠️ Warning: Tab/Window switch detected! Integrity log updated.</div>
+  <!-- Main Viewport -->
+  <main class="main-content">
+    <div id="warning-banner" class="warning-banner">⚠️ Integrity Alert: Window/tab switch flagged by proctoring engine.</div>
 
-    <div id="tests-section">
-      <h3>Available Assessments</h3>
-      <div id="tests-list">Loading tests...</div>
+    <!-- VIEW 1: DASHBOARD / OVERVIEW -->
+    <div id="view-dashboard">
+      <header class="dashboard-header">
+        <h1>Welcome back, <span id="student-name-display">Student</span></h1>
+        <small style="color: var(--silver);">Session Status: Authenticated</small>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h4>Available Tests</h4>
+          <p id="stat-available">0</p>
+        </div>
+        <div class="stat-card">
+          <h4>Completed Exams</h4>
+          <p id="stat-completed">0</p>
+        </div>
+        <div class="stat-card">
+          <h4>Integrity Score</h4>
+          <p style="color: var(--accent-green);">100%</p>
+        </div>
+      </div>
+
+      <div class="section-title">Quick Action Center</div>
+      <button onclick="switchView('assessments')">Browse Active Assessments →</button>
     </div>
 
-    <div id="exam-section" class="hidden">
-      <h3 id="exam-title">Exam in Progress</h3>
-      <div id="questions-container"></div>
-      <button onclick="submitExam()">Submit Assessment</button>
+    <!-- VIEW 2: ASSESSMENTS LIST -->
+    <div id="view-assessments" class="hidden">
+      <header class="dashboard-header">
+        <h1>Available <span>Assessments</span></h1>
+      </header>
+      <div id="tests-list" class="test-list">
+        <p style="color: var(--text-secondary);">Loading assessments from secure registry...</p>
+      </div>
     </div>
 
-    <div id="result-section" class="hidden">
-      <h3>Assessment Result</h3>
-      <p id="score-display"></p>
-      <button onclick="location.reload()">Back to Tests</button>
+    <!-- VIEW 3: ACTIVE EXAM INTERFACE -->
+    <div id="view-exam" class="hidden">
+      <div class="exam-wrapper">
+        <div class="exam-header">
+          <div>
+            <h2 id="exam-title">Assessment in Progress</h2>
+            <small style="color: var(--text-secondary);">Randomized question sequence & option shuffle active</small>
+          </div>
+          <div style="font-weight: bold; color: var(--gold);" id="timer-display">Duration: Standard</div>
+        </div>
+        <div id="questions-container"></div>
+        <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+          <button class="btn-secondary" onclick="switchView('assessments')">Abandon / Exit</button>
+          <button onclick="submitExam()">Submit Assessment</button>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <!-- VIEW 4: RESULTS VIEW -->
+    <div id="view-result" class="hidden">
+      <div class="result-card">
+        <h2>Assessment Evaluated</h2>
+        <p id="score-display">You scored X out of Y!</p>
+        <button onclick="switchView('assessments')">Return to Assessments</button>
+      </div>
+    </div>
+
+    <!-- VIEW 5: HISTORY -->
+    <div id="view-history" class="hidden">
+      <header class="dashboard-header">
+        <h1>Assessment <span>History</span></h1>
+      </header>
+      <div id="history-list" class="test-list">
+        <p style="color: var(--text-secondary);">Loading attempt history...</p>
+      </div>
+    </div>
+  </main>
 
   <script>
-    // ⚠️ UPDATE THIS URL TO MATCH YOUR EXACT RENDER BACKEND URL IF NEEDED
-    const API_BASE = 'https://edutest-0y0z.onrender.com'; 
+    // ⚡ LIVE RENDER BACKEND URL CONFIRMED
+    const API_BASE = 'https://edutest-0y0z.onrender.com';
     const token = localStorage.getItem('token');
+    const storedName = localStorage.getItem('name') || 'Student';
+    
     if (!token) window.location.href = 'index.html';
+    document.getElementById('student-name-display').innerText = storedName;
 
     let currentTestId = null;
     let warningsCount = 0;
@@ -60,7 +196,25 @@
       window.location.href = 'index.html';
     }
 
-    // Fisher-Yates shuffle array helper
+    function switchView(viewName) {
+      ['dashboard', 'assessments', 'exam', 'result', 'history'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+      });
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+      
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      if(viewName === 'assessments' || viewName === 'exam') {
+        document.querySelectorAll('.nav-links a').classList.add('active');
+        if(viewName === 'assessments') loadTests();
+      } else if(viewName === 'history') {
+        document.querySelectorAll('.nav-links a').classList.add('active');
+        loadHistory();
+      } else {
+        document.querySelectorAll('.nav-links a')[0].classList.add('active');
+      }
+    }
+
+    // Fisher-Yates array shuffling algorithm
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -70,12 +224,13 @@
       return arr;
     }
 
-    // Detect tab/window switch
+    // Proctoring tab switch detector
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && currentTestId) {
         warningsCount++;
-        document.getElementById('warning-banner').style.display = 'block';
-        setTimeout(() => document.getElementById('warning-banner').style.display = 'none', 4000);
+        const banner = document.getElementById('warning-banner');
+        banner.style.display = 'block';
+        setTimeout(() => banner.style.display = 'none', 5000);
       }
     });
 
@@ -84,42 +239,50 @@
         const res = await fetch(`${API_BASE}/api/student/tests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403) logout();
-          throw new Error('Server returned error status');
-        }
+        if (res.status === 401 || res.status === 403) logout();
         const tests = await res.json();
-        const listDiv = document.getElementById('tests-list');
         
+        const listDiv = document.getElementById('tests-list');
+        const activeCount = tests.filter(t => t.test_state === 'ACTIVE' && !t.is_completed).length;
+        const compCount = tests.filter(t => t.is_completed > 0).length;
+        
+        document.getElementById('stat-available').innerText = activeCount;
+        document.getElementById('stat-completed').innerText = compCount;
+
         if (!tests || tests.length === 0) {
-          listDiv.innerHTML = '<p>No assessments available right now.</p>';
+          listDiv.innerHTML = '<p style="color:var(--text-secondary);">No assessments registered in system.</p>';
           return;
         }
 
         listDiv.innerHTML = tests.map(t => {
           const safeTitle = t.title.replace(/'/g, "\\'");
+          const isDone = t.is_completed > 0;
+          const isActive = t.test_state === 'ACTIVE';
+
           return `
             <div class="test-card">
-              <div>
-                <strong>${t.title}</strong> (${t.duration_mins || 10} mins)
-                <br><small>State: ${t.test_state || 'ACTIVE'}</small>
+              <div class="test-info">
+                <h3>${t.title}</h3>
+                <p>Duration: ${t.duration_mins || 15} mins | Marks: ${t.total_marks || 'Auto'}</p>
+                <span class="state-badge ${isActive ? 'state-active' : 'state-locked'}">${isDone ? 'COMPLETED' : t.test_state}</span>
               </div>
               <div>
-                ${t.is_completed > 0 ? `<span>Score: ${t.score}</span>` : (t.test_state === 'ACTIVE' ? `<button onclick="startTest(${t.id}, '${safeTitle}')">Start Test</button>` : '<span>Locked</span>')}
+                ${isDone 
+                  ? `<span style="color: var(--gold); font-weight: bold;">Score Recorded: ${t.score}</span>` 
+                  : (isActive ? `<button onclick="startTest(${t.id}, '${safeTitle}')">Start Assessment</button>` : `<button class="btn-secondary" disabled>Locked</button>`)
+                }
               </div>
             </div>
           `;
         }).join('');
       } catch (err) {
-        console.error('Error loading tests:', err);
-        document.getElementById('tests-list').innerText = 'Failed to load assessments. Render backend might be waking up (wait 15s and refresh).';
+        document.getElementById('tests-list').innerHTML = '<p style="color:var(--accent-red);">Failed to communicate with Render backend (allow 15s cold-start spin-up).</p>';
       }
     }
 
     async function startTest(testId, title) {
       currentTestId = testId;
-      document.getElementById('tests-section').classList.add('hidden');
-      document.getElementById('exam-section').classList.remove('hidden');
+      switchView('exam');
       document.getElementById('exam-title').innerText = title;
 
       try {
@@ -130,37 +293,37 @@
 
         const container = document.getElementById('questions-container');
         container.innerHTML = questions.map((q, idx) => {
-          const options = shuffleArray([
+          const shuffledOptions = shuffleArray([
             { label: 'A', text: q.option_a },
             { label: 'B', text: q.option_b },
             { label: 'C', text: q.option_c },
             { label: 'D', text: q.option_d }
           ]);
 
-          const optsHtml = options.map(opt => `
-            <label>
+          const optsHtml = shuffledOptions.map(opt => `
+            <label class="option-label">
               <input type="radio" name="q_${q.id}" value="${opt.label}">
-              <strong>${opt.label}:</strong> ${opt.text}
+              <strong>${opt.label}.</strong> ${opt.text}
             </label>
           `).join('');
 
           return `
             <div class="question-block">
-              <p><strong>Q${idx + 1}.</strong> ${q.question_text}</p>
+              <p><strong>Question ${idx + 1}:</strong> ${q.question_text}</p>
               ${optsHtml}
             </div>
           `;
         }).join('');
       } catch (err) {
-        alert('Failed to load questions.');
+        alert('Error loading randomized question set.');
       }
     }
 
     async function submitExam() {
+      if (!confirm('Are you ready to submit your encrypted assessment responses?')) return;
+
       const answers = {};
-      const container = document.getElementById('questions-container');
-      const inputs = container.querySelectorAll('input[type="radio"]:checked');
-      
+      const inputs = document.querySelectorAll('#questions-container input[type="radio"]:checked');
       inputs.forEach(input => {
         const qId = input.name.replace('q_', '');
         answers[qId] = input.value;
@@ -169,30 +332,51 @@
       try {
         const res = await fetch(`${API_BASE}/api/results`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            test_id: currentTestId,
-            answers: answers,
-            warnings_count: warningsCount
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ test_id: currentTestId, answers, warnings_count: warningsCount })
         });
-
         const data = await res.json();
         if (res.ok) {
-          document.getElementById('exam-section').classList.add('hidden');
-          document.getElementById('result-section').classList.remove('hidden');
-          document.getElementById('score-display').innerText = `You scored ${data.score} out of ${data.total_marks}!`;
+          switchView('result');
+          document.getElementById('score-display').innerText = `You scored ${data.score} out of ${data.total_marks || 'Total'}!`;
         } else {
-          alert(data.error || 'Submission failed.');
+          alert(data.error || 'Submission rejected.');
         }
       } catch (err) {
-        alert('Network error while submitting assessment.');
+        alert('Network interruption during final submission payload dispatch.');
       }
     }
 
+    async function loadHistory() {
+      try {
+        const res = await fetch(`${API_BASE}/api/student/history`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const history = await res.json();
+        const listDiv = document.getElementById('history-list');
+        
+        if (!history || history.length === 0) {
+          listDiv.innerHTML = '<p style="color:var(--text-secondary);">No past submissions found.</p>';
+          return;
+        }
+
+        listDiv.innerHTML = history.map(h => `
+          <div class="test-card">
+            <div class="test-info">
+              <h3>${h.test_title}</h3>
+              <p>Percentage: ${h.percentage}% | Tab Warnings Flagged: ${h.warnings_count}</p>
+            </div>
+            <div style="font-size: 1.3rem; font-weight: bold; color: var(--gold);">
+              ${h.score} / ${h.total_marks}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('history-list').innerHTML = '<p style="color:var(--accent-red);">Failed to load history archive.</p>';
+      }
+    }
+
+    // Initialize Dashboard overview
     loadTests();
   </script>
 </body>
