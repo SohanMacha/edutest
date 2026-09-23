@@ -11,7 +11,6 @@ app.use(cors());
 
 const JWT_SECRET = 'edutest_super_secret_key_2026';
 
-// MySQL Database Connection Pool (Using Environment Variables for Production)
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -23,7 +22,6 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Test Database Connection on Startup
 async function testDbConnection() {
   try {
     const connection = await pool.getConnection();
@@ -47,7 +45,7 @@ function verifyToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ error: 'Access denied. No token provided.' });
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(' ');
   if (!token) return res.status(401).json({ error: 'Malformed token.' });
 
   try {
@@ -188,9 +186,13 @@ app.get('/api/student/tests', verifyToken, async (req, res) => {
   }
 });
 
+// RANDOMISED QUESTIONS ENDPOINT
 app.get('/api/tests/:id/questions', verifyToken, async (req, res) => {
   try {
-    const [questions] = await pool.query('SELECT id, question_text, option_a, option_b, option_c, option_d FROM questions WHERE test_id = ?', [req.params.id]);
+    const [questions] = await pool.query(
+      'SELECT id, question_text, option_a, option_b, option_c, option_d FROM questions WHERE test_id = ? ORDER BY RAND()', 
+      [req.params.id]
+    );
     res.json(questions);
   } catch (err) {
     res.status(500).json({ error: 'Failed to load questions' });
@@ -445,7 +447,6 @@ app.delete('/api/faculty/submissions/:id/reset', verifyToken, async (req, res) =
   }
 });
 
-// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
