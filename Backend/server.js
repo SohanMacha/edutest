@@ -11,30 +11,19 @@ app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 
-const dbUri = process.env.DATABASE_URL;
-console.log('Environment DATABASE_URL is set:', !!dbUri);
-
-const poolConfig = dbUri 
-  ? {
-      uri: dbUri,
-      ssl: { rejectUnauthorized: false },
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 20000
-    }
-  : {
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'edutest',
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 20000
-    };
-
-const pool = mysql.createPool(poolConfig);
+// Database connection using individual Render environment variables
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'edutest',
+  port: Number(process.env.DB_PORT) || 3306,
+  ssl: { rejectUnauthorized: false },
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  connectTimeout: 20000
+});
 
 // Diagnostic test on startup
 pool.getConnection()
