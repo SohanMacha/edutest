@@ -13,12 +13,19 @@
     label { display: block; margin: 8px 0; cursor: pointer; }
     .warning-banner { background: #ef4444; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; }
     .hidden { display: none; }
+    .logout-btn { background: #ef4444; float: right; }
+    .logout-btn:hover { background: #dc2626; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h2>EduTest Student Portal</h2>
+    <header>
+      <h2>EduTest Student Portal</h2>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+
     <div id="warning-banner" class="warning-banner">⚠️ Warning: Tab/Window switch detected! Integrity log updated.</div>
 
     <div id="tests-section">
@@ -40,12 +47,18 @@
   </div>
 
   <script>
-    const API_BASE = 'https://your-backend-url.onrender.com'; // Change to relative or your Render URL if needed
+    // ⚠️ UPDATE THIS URL TO MATCH YOUR EXACT RENDER BACKEND URL IF NEEDED
+    const API_BASE = 'https://edutest.onrender.com'; 
     const token = localStorage.getItem('token');
     if (!token) window.location.href = 'index.html';
 
     let currentTestId = null;
     let warningsCount = 0;
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    }
 
     // Fisher-Yates shuffle array helper
     function shuffleArray(array) {
@@ -68,24 +81,38 @@
 
     async function loadTests() {
       try {
-        const res = await fetch('/api/student/tests', {
+        const res = await fetch(`${API_BASE}/api/student/tests`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) logout();
+          throw new Error('Server returned error status');
+        }
         const tests = await res.json();
         const listDiv = document.getElementById('tests-list');
-        listDiv.innerHTML = tests.map(t => `
-          <div class="test-card">
-            <div>
-              <strong>${t.title}</strong> (${t.duration_mins} mins)
-              <br><small>State: ${t.test_state}</small>
+        
+        if (!tests || tests.length === 0) {
+          listDiv.innerHTML = '<p>No assessments available right now.</p>';
+          return;
+        }
+
+        listDiv.innerHTML = tests.map(t => {
+          const safeTitle = t.title.replace(/'/g, "\\'");
+          return `
+            <div class="test-card">
+              <div>
+                <strong>${t.title}</strong> (${t.duration_mins || 10} mins)
+                <br><small>State: ${t.test_state || 'ACTIVE'}</small>
+              </div>
+              <div>
+                ${t.is_completed > 0 ? `<span>Score: ${t.score}</span>` : (t.test_state === 'ACTIVE' ? `<button onclick="startTest(${t.id}, '${safeTitle}')">Start Test</button>` : '<span>Locked</span>')}
+              </div>
             </div>
-            <div>
-              ${t.is_completed > 0 ? `<span>Score: ${t.score}</span>` : (t.test_state === 'ACTIVE' ? `<button onclick="startTest(${t.id}, '${t.title}')">Start Test</button>` : '<span>Locked</span>')}
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } catch (err) {
-        document.getElementById('tests-list').innerText = 'Failed to load assessments.';
+        console.error('Error loading tests:', err);
+        document.getElementById('tests-list').innerText = 'Failed to load assessments. Render backend might be waking up (wait 15s and refresh).';
       }
     }
 
@@ -95,35 +122,38 @@
       document.getElementById('exam-section').classList.remove('hidden');
       document.getElementById('exam-title').innerText = title;
 
-      const res = await fetch(`/api/tests/${testId}/questions`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const questions = await res.json();
+      try {
+        const res = await fetch(`${API_BASE}/api/tests/${testId}/questions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const questions = await res.json();
 
-      const container = document.getElementById('questions-container');
-      container.innerHTML = questions.map((q, idx) => {
-        // Shuffle the 4 options visually per attempt
-        const options = shuffleArray([
-          { label: 'A', text: q.option_a },
-          { label: 'B', text: q.option_b },
-          { label: 'C', text: q.option_c },
-          { label: 'D', text: q.option_d }
-        ]);
+        const container = document.getElementById('questions-container');
+        container.innerHTML = questions.map((q, idx) => {
+          const options = shuffleArray([
+            { label: 'A', text: q.option_a },
+            { label: 'B', text: q.option_b },
+            { label: 'C', text: q.option_c },
+            { label: 'D', text: q.option_d }
+          ]);
 
-        const optsHtml = options.map(opt => `
-          <label>
-            <input type="radio" name="q_${q.id}" value="${opt.label}">
-            <strong>${opt.label}:</strong> ${opt.text}
-          </label>
-        `).join('');
+          const optsHtml = options.map(opt => `
+            <label>
+              <input type="radio" name="q_${q.id}" value="${opt.label}">
+              <strong>${opt.label}:</strong> ${opt.text}
+            </label>
+          `).join('');
 
-        return `
-          <div class="question-block">
-            <p><strong>Q${idx + 1}.</strong> ${q.question_text}</p>
-            ${optsHtml}
-          </div>
-        `;
-      }).join('');
+          return `
+            <div class="question-block">
+              <p><strong>Q${idx + 1}.</strong> ${q.question_text}</p>
+              ${optsHtml}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        alert('Failed to load questions.');
+      }
     }
 
     async function submitExam() {
@@ -136,26 +166,30 @@
         answers[qId] = input.value;
       });
 
-      const res = await fetch('/api/results', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          test_id: currentTestId,
-          answers: answers,
-          warnings_count: warningsCount
-        })
-      });
+      try {
+        const res = await fetch(`${API_BASE}/api/results`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            test_id: currentTestId,
+            answers: answers,
+            warnings_count: warningsCount
+          })
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        document.getElementById('exam-section').classList.add('hidden');
-        document.getElementById('result-section').classList.remove('hidden');
-        document.getElementById('score-display').innerText = `You scored ${data.score} out of ${data.total_marks}!`;
-      } else {
-        alert(data.error || 'Submission failed.');
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('exam-section').classList.add('hidden');
+          document.getElementById('result-section').classList.remove('hidden');
+          document.getElementById('score-display').innerText = `You scored ${data.score} out of ${data.total_marks}!`;
+        } else {
+          alert(data.error || 'Submission failed.');
+        }
+      } catch (err) {
+        alert('Network error while submitting assessment.');
       }
     }
 
