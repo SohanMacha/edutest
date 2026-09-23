@@ -11,25 +11,30 @@ app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 
-// Database connection pool setup
-const dbConfig = process.env.DATABASE_URL || {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'edutest',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-};
-
-const pool = typeof dbConfig === 'string' 
-  ? mysql.createPool(dbConfig) 
-  : mysql.createPool(dbConfig);
+// Database connection pool setup with cloud SSL support
+const dbUri = process.env.DATABASE_URL;
+const pool = dbUri 
+  ? mysql.createPool({
+      uri: dbUri,
+      ssl: { rejectUnauthorized: false },
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    })
+  : mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'edutest',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
 
 // Auth Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ');
+  const token = authHeader && (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader.split(' '));
   if (!token) return res.status(401).json({ error: 'Access token required' });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
