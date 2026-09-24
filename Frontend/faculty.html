@@ -511,12 +511,12 @@
           </button>
         </li>
         <li>
-          <button type="button" class="nav-item" onclick="activateSection('tabStudents', this)">
+          <button type="button" class="nav-item" onclick="activateSection('tabStudents', this); loadData();">
             <i class="fa-solid fa-users"></i> Students
           </button>
         </li>
         <li>
-          <button type="button" class="nav-item" onclick="activateSection('tabReports', this)">
+          <button type="button" class="nav-item" onclick="activateSection('tabReports', this); loadData();">
             <i class="fa-solid fa-square-poll-vertical"></i> Reports
           </button>
         </li>
@@ -1106,7 +1106,7 @@
         `).join('');
       }
 
-      async function loadData() {
+      window.loadData = async function() {
         try {
           const statsRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/stats', {
             headers: { 'Authorization': `Bearer ${token}` }
