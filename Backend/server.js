@@ -11,7 +11,7 @@ app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 
-// Database connection using individual Render environment variables
+// Database connection using individual Render / Railway environment variables
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -48,8 +48,12 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Updated Faculty Stats & Graph Data Endpoint
-app.get('/api/faculty/stats', async (req, res) => {
+// ----------------------------------------------------
+// FACULTY ENDPOINTS
+// ----------------------------------------------------
+
+// Faculty Stats & Graph Analytics Endpoint
+app.get('/api/faculty/stats', authenticateToken, async (req, res) => {
   try {
     const [tests] = await pool.query('SELECT COUNT(*) as totalTests FROM tests');
     const [students] = await pool.query('SELECT COUNT(DISTINCT student_id) as totalStudents FROM results');
@@ -66,10 +70,90 @@ app.get('/api/faculty/stats', async (req, res) => {
   }
 });
 
-// Login
-app.get('/api/auth/login', async (req, res) => {
-  res.status(405).json({ error: 'Use POST for login' });
+// Faculty Enrolled Students Directory Endpoint
+app.get('/api/faculty/students', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT u.id, u.name, u.email, u.roll_number, u.phone, u.department, u.division_batch, u.semester,
+      (SELECT COUNT(DISTINCT test_id) FROM results WHERE results.student_id = u.id) as tests_taken
+      FROM users u WHERE u.role = 'student'
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
+// Faculty Assessment Submissions & Integrity Reports Endpoint
+app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT r.id as submission_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
+             t.title as test_title, u.name as student_name, u.email as student_email, u.roll_number
+      FROM results r
+      JOIN tests t ON r.test_id = t.id
+      JOIN users u ON r.student_id = u.id
+      ORDER BY r.created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Faculty Create Assessment Endpoint
+app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
+  try {
+    const { title, duration_mins, start_date, end_date, questions } = req.body;
+    
+    const [testResult] = await pool.query(
+      'INSERT INTO tests (title, duration_mins, start_date, end_date, created_by) VALUES (?, ?, ?, ?, ?)',
+      [title, duration_mins, start_date, end_date, req.user.id]
+    );
+    const testId = testResult.insertId;
+
+    if (questions && questions.length > 0) {
+      for (const q of questions) {
+        await pool.query(
+          'INSERT INTO questions (test_id, question_text, option_a, option_b, option_c, option_d, correct_option, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [testId, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_option, q.marks || 1]
+        );
+      }
+    }
+
+    res.json({ message: 'Assessment created successfully', testId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Faculty Delete Assessment Endpoint
+app.delete('/api/faculty/tests/:testId', authenticateToken, async (req, res) => {
+  try {
+    const testId = req.params.testId;
+    await pool.query('DELETE FROM questions WHERE test_id = ?', [testId]);
+    await pool.query('DELETE FROM results WHERE test_id = ?', [testId]);
+    await pool.query('DELETE FROM tests WHERE id = ?', [testId]);
+    res.json({ message: 'Assessment deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Faculty Reset/Allow Re-test Endpoint
+app.delete('/api/faculty/submissions/:submissionId/reset', authenticateToken, async (req, res) => {
+  try {
+    const submissionId = req.params.submissionId;
+    await pool.query('DELETE FROM results WHERE id = ?', [submissionId]);
+    res.json({ message: 'Student submission reset successfully. Re-test allowed.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------
+// AUTHENTICATION ENDPOINTS
+// ----------------------------------------------------
 
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -91,7 +175,10 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Global Timezone-Corrected Student Tests Query
+// ----------------------------------------------------
+// STUDENT & PROFILE ENDPOINTS
+// ----------------------------------------------------
+
 app.get('/api/student/tests', authenticateToken, async (req, res) => {
   try {
     const query = `
@@ -114,7 +201,6 @@ app.get('/api/student/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// Questions for a test
 app.get('/api/tests/:testId/questions', authenticateToken, async (req, res) => {
   try {
     const [questions] = await pool.query(
@@ -127,7 +213,6 @@ app.get('/api/tests/:testId/questions', authenticateToken, async (req, res) => {
   }
 });
 
-// Submit results
 app.post('/api/results', authenticateToken, async (req, res) => {
   try {
     const { test_id, answers, warnings_count } = req.body;
@@ -159,36 +244,9 @@ app.post('/api/results', authenticateToken, async (req, res) => {
   }
 });
 
-// Student History
-app.get('/api/student/history', authenticateToken, async (req, res) => {
-  try {
-    const query = `
-      SELECT r.id as result_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at, t.title as test_title
-      FROM results r
-      JOIN tests t ON r.test_id = t.id
-      WHERE r.student_id = ?
-      ORDER BY r.created_at DESC
-    `;
-    const [rows] = await pool.query(query, [req.user.id]);
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Review breakdown
-app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
-  try {
-    res.json([]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Profile endpoints
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT id, name, email, roll_number, phone, department, year_of_study, semester, division_batch, role FROM users WHERE id = ?', [req.user.id]);
+    const [users] = await pool.query('SELECT id, name, email, roll_number, phone, department, year_of_study, semester, division_batch, designation, specialization, role FROM users WHERE id = ?', [req.user.id]);
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json(users[0]);
   } catch (err) {
@@ -198,12 +256,12 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
   try {
-    const { name, phone, department, year_of_study, semester, division_batch } = req.body;
+    const { name, phone, department, designation, specialization } = req.body;
     await pool.query(
-      'UPDATE users SET name=?, phone=?, department=?, year_of_study=?, semester=?, division_batch=? WHERE id=?',
-      [name, phone, department, year_of_study, semester, division_batch, req.user.id]
+      'UPDATE users SET name=?, phone=?, department=?, designation=?, specialization=? WHERE id=?',
+      [name, phone, department, designation, specialization, req.user.id]
     );
-    res.json({ message: 'Profile updated' });
+    res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
