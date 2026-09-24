@@ -388,14 +388,6 @@
       cursor: pointer;
     }
 
-    .review-item {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-color);
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 14px;
-    }
-
     .score-circle {
       width: 110px;
       height: 110px;
@@ -622,7 +614,7 @@
         <h3>Exam Detailed Breakdown</h3>
         <button class="btn-close" onclick="document.getElementById('reviewModal').style.display = 'none';">&times;</button>
       </div>
-      <div id="reviewContainer">
+      <div id="reviewContentContainer">
         <p style="color: var(--text-muted);">Loading answers...</p>
       </div>
     </div>
@@ -905,7 +897,7 @@
               cheatBadge.style.display = 'none';
             }
 
-            document.getElementById('scoreDisplay').textContent = `${result.score} / ${result.total_marks || 'Total'} `;
+            document.getElementById('scoreDisplay').textContent = `${result.score} / ${result.total_marks || 'Total'}`;
             const pct = result.total_marks ? Math.round((result.score / result.total_marks) * 100) : 0;
             document.getElementById('scorePercentage').textContent = `${pct}% (${pct >= 40 ? 'Passed' : 'Failed'})`;
             document.getElementById('scorePercentage').style.color = pct >= 40 ? 'var(--primary)' : 'var(--danger)';
@@ -1049,59 +1041,59 @@
       };
 
       window.openReviewModal = async function(resultId) {
-      const modal = document.getElementById('reviewModal');
-      const container = document.getElementById('reviewContentContainer');
-      modal.style.display = 'flex';
-      container.innerHTML = '<p style="text-align: center; color: #94a3b8;">Loading review breakdown...</p>';
+        const modal = document.getElementById('reviewModal');
+        const container = document.getElementById('reviewContentContainer');
+        modal.style.display = 'flex';
+        container.innerHTML = '<p style="text-align: center; color: #94a3b8;">Loading review breakdown...</p>';
 
-      try {
-        const res = await fetch(`https://edutest-0y0z.onrender.com/api/student/review/${resultId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+        try {
+          const res = await fetch(`${API_BASE}/api/student/review/${resultId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
 
-        if (!res.ok) {
-          container.innerHTML = `<p style="color: #ef4444; text-align: center;">${data.error || 'Failed to load review breakdown. (Note: Older test attempts made before this update do not store answer logs).'}</p>`;
-          return;
-        }
+          if (!res.ok) {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">${data.error || 'Failed to load review breakdown. (Note: Older test attempts made before this update do not store answer logs).'}</p>`;
+            return;
+          }
 
-        container.innerHTML = `
-          <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-around; text-align: center;">
-            <div><small style="color: #94a3b8;">Final Score</small><br><strong style="font-size: 1.2rem; color: #10b981;">${data.score} / ${data.total_marks}</strong></div>
-            <div><small style="color: #94a3b8;">Percentage</small><br><strong style="font-size: 1.2rem; color: #38bdf8;">${data.percentage}%</strong></div>
-          </div>
-        ` + data.questions.map((q, idx) => {
-          const studentAns = data.studentAnswers[q.id] || 'Not Answered';
-          const sAnsStr = Array.isArray(studentAns) ? studentAns.sort().join(',') : String(studentAns).trim();
-          const cAnsStr = String(q.correct_option).trim();
-          const isCorrect = sAnsStr === cAnsStr;
-
-          return `
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <strong style="color: #38bdf8;">Question ${idx + 1}</strong>
-                <span style="color: ${isCorrect ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                  ${isCorrect ? '✅ Correct' : '❌ Incorrect'}
-                </span>
-              </div>
-              <p style="margin-bottom: 12px; font-weight: 500;">${q.question_text}</p>
-              <div style="font-size: 0.9rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-                <div>A) ${q.option_a}</div>
-                <div>B) ${q.option_b}</div>
-                <div>C) ${q.option_c}</div>
-                <div>D) ${q.option_d}</div>
-              </div>
-              <div style="font-size: 0.85rem; background: #1e293b; padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between;">
-                <span>Your Answer: <strong style="color: ${isCorrect ? '#10b981' : '#ef4444'};">${studentAns}</strong></span>
-                <span>Correct Answer: <strong style="color: #10b981;">${q.correct_option}</strong></span>
-              </div>
+          container.innerHTML = `
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-around; text-align: center;">
+              <div><small style="color: #94a3b8;">Final Score</small><br><strong style="font-size: 1.2rem; color: #10b981;">${data.score} / ${data.total_marks}</strong></div>
+              <div><small style="color: #94a3b8;">Percentage</small><br><strong style="font-size: 1.2rem; color: #38bdf8;">${data.percentage}%</strong></div>
             </div>
-          `;
-        }).join('');
-      } catch (err) {
-        container.innerHTML = '<p style="color: #ef4444; text-align: center;">Network error loading review data.</p>';
-      }
-    };
+          ` + data.questions.map((q, idx) => {
+            const studentAns = data.studentAnswers[q.id] || 'Not Answered';
+            const sAnsStr = Array.isArray(studentAns) ? [...studentAns].sort().join(',') : String(studentAns).trim();
+            const cAnsStr = String(q.correct_option).trim();
+            const isCorrect = sAnsStr === cAnsStr;
+
+            return `
+              <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong style="color: #38bdf8;">Question ${idx + 1}</strong>
+                  <span style="color: ${isCorrect ? '#10b981' : '#ef4444'}; font-weight: 600;">
+                    ${isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                  </span>
+                </div>
+                <p style="margin-bottom: 12px; font-weight: 500;">${q.question_text}</p>
+                <div style="font-size: 0.9rem; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                  <div>A) ${q.option_a}</div>
+                  <div>B) ${q.option_b}</div>
+                  <div>C) ${q.option_c}</div>
+                  <div>D) ${q.option_d}</div>
+                </div>
+                <div style="font-size: 0.85rem; background: #1e293b; padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between;">
+                  <span>Your Answer: <strong style="color: ${isCorrect ? '#10b981' : '#ef4444'};">${Array.isArray(studentAns) ? studentAns.join(', ') : studentAns}</strong></span>
+                  <span>Correct Answer: <strong style="color: #10b981;">${q.correct_option}</strong></span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } catch (err) {
+          container.innerHTML = '<p style="color: #ef4444; text-align: center;">Network error loading review data.</p>';
+        }
+      };
 
       window.loadStudentProfile = async function() {
         try {
