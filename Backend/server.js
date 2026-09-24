@@ -52,7 +52,6 @@ function authenticateToken(req, res, next) {
 // FACULTY ENDPOINTS
 // ----------------------------------------------------
 
-// Faculty Stats & Graph Analytics Endpoint
 app.get('/api/faculty/stats', authenticateToken, async (req, res) => {
   try {
     const [tests] = await pool.query('SELECT COUNT(*) as totalTests FROM tests');
@@ -70,7 +69,6 @@ app.get('/api/faculty/stats', authenticateToken, async (req, res) => {
   }
 });
 
-// Faculty Enrolled Students Directory Endpoint
 app.get('/api/faculty/students', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -84,7 +82,6 @@ app.get('/api/faculty/students', authenticateToken, async (req, res) => {
   }
 });
 
-// Faculty Assessment Submissions & Integrity Reports Endpoint
 app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -101,7 +98,6 @@ app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
   }
 });
 
-// Faculty Create Assessment Endpoint
 app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   try {
     const { title, duration_mins, start_date, end_date, questions } = req.body;
@@ -127,7 +123,6 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// Faculty Delete Assessment Endpoint
 app.delete('/api/faculty/tests/:testId', authenticateToken, async (req, res) => {
   try {
     const testId = req.params.testId;
@@ -140,7 +135,6 @@ app.delete('/api/faculty/tests/:testId', authenticateToken, async (req, res) => 
   }
 });
 
-// Faculty Reset/Allow Re-test Endpoint
 app.delete('/api/faculty/submissions/:submissionId/reset', authenticateToken, async (req, res) => {
   try {
     const submissionId = req.params.submissionId;
@@ -239,6 +233,23 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     );
 
     res.json({ id: insertRes.insertId, score, total_marks, percentage });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Student History Endpoint Restored
+app.get('/api/student/history', authenticateToken, async (req, res) => {
+  try {
+    const query = `
+      SELECT r.id as result_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at, t.title as test_title
+      FROM results r
+      JOIN tests t ON r.test_id = t.id
+      WHERE r.student_id = ?
+      ORDER BY r.created_at DESC
+    `;
+    const [rows] = await pool.query(query, [req.user.id]);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
