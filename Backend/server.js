@@ -227,9 +227,11 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     }
 
     const percentage = total_marks > 0 ? Math.round((score / total_marks) * 100) : 0;
+    const answersJson = JSON.stringify(answers || {});
+
     const [insertRes] = await pool.query(
-      'INSERT INTO results (test_id, student_id, score, total_marks, percentage, warnings_count) VALUES (?, ?, ?, ?, ?, ?)',
-      [test_id, req.user.id, score, total_marks, percentage, warnings_count || 0]
+      'INSERT INTO results (test_id, student_id, score, total_marks, percentage, warnings_count, answers) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [test_id, req.user.id, score, total_marks, percentage, warnings_count || 0, answersJson]
     );
 
     res.json({ id: insertRes.insertId, score, total_marks, percentage });
@@ -238,7 +240,6 @@ app.post('/api/results', authenticateToken, async (req, res) => {
   }
 });
 
-// Student History Endpoint Restored
 app.get('/api/student/history', authenticateToken, async (req, res) => {
   try {
     const query = `
@@ -250,6 +251,35 @@ app.get('/api/student/history', authenticateToken, async (req, res) => {
     `;
     const [rows] = await pool.query(query, [req.user.id]);
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Detailed Question-by-Question Review Breakdown Endpoint
+app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
+  try {
+    const [results] = await pool.query('SELECT * FROM results WHERE id = ? AND student_id = ?', [req.params.resultId, req.user.id]);
+    if (results.length === 0) return res.status(404).json({ error: 'Result not found' });
+    const result = results[0];
+
+    const [questions] = await pool.query(
+      'SELECT id, question_text, option_a, option_b, option_c, option_d, correct_option, marks FROM questions WHERE test_id = ?',
+      [result.test_id]
+    );
+
+    let studentAnswers = {};
+    try {
+      studentAnswers = JSON.parse(result.answers || '{}');
+    } catch (e) {}
+
+    res.json({
+      score: result.score,
+      total_marks: result.total_marks,
+      percentage: result.percentage,
+      questions: questions,
+      studentAnswers: studentAnswers
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
