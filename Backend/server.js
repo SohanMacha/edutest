@@ -48,11 +48,19 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Health check / Stats
+// Updated Faculty Stats & Graph Data Endpoint
 app.get('/api/faculty/stats', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT COUNT(*) as totalTests FROM tests');
-    res.json({ totalTests: rows[0].totalTests });
+    const [tests] = await pool.query('SELECT COUNT(*) as totalTests FROM tests');
+    const [students] = await pool.query('SELECT COUNT(DISTINCT student_id) as totalStudents FROM results');
+    const [submissions] = await pool.query('SELECT COUNT(*) as totalSubmissions, AVG(percentage) as avgPassRate FROM results');
+    
+    res.json({
+      totalTests: tests[0].totalTests,
+      totalStudents: students[0].totalStudents,
+      totalSubmissions: submissions[0].totalSubmissions,
+      passRate: Math.round(submissions[0].avgPassRate || 0)
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
