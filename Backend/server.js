@@ -214,11 +214,20 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     
     let score = 0;
     let total_marks = 0;
+    
+    // Normalize keys of incoming answers to strings
+    const normalizedAnswers = {};
+    if (answers) {
+      for (const key of Object.keys(answers)) {
+        normalizedAnswers[String(key)] = answers[key];
+      }
+    }
+
     for (const q of questions) {
       total_marks += (q.marks || 1);
-      const studentAns = answers[q.id];
+      const studentAns = normalizedAnswers[String(q.id)];
       if (studentAns) {
-        const sAnsStr = Array.isArray(studentAns) ? studentAns.map(s=>s.trim()).sort().join(',') : String(studentAns).trim();
+        const sAnsStr = Array.isArray(studentAns) ? studentAns.map(s=>String(s).trim()).sort().join(',') : String(studentAns).trim();
         const cAnsStr = String(q.correct_option).trim();
         if (sAnsStr === cAnsStr) {
           score += (q.marks || 1);
@@ -227,7 +236,7 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     }
 
     const percentage = total_marks > 0 ? Math.round((score / total_marks) * 100) : 0;
-    const answersJson = JSON.stringify(answers || {});
+    const answersJson = JSON.stringify(normalizedAnswers);
 
     const [insertRes] = await pool.query(
       'INSERT INTO results (test_id, student_id, score, total_marks, percentage, warnings_count, answers) VALUES (?, ?, ?, ?, ?, ?, ?)',

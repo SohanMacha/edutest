@@ -1068,6 +1068,8 @@
             const cAnsStr = String(q.correct_option).trim();
             const isCorrect = sAnsStr === cAnsStr;
 
+            const displayAns = Array.isArray(studentAns) ? studentAns.join(', ') : (studentAns === 'Not Answered' ? 'Not Answered' : studentAns);
+            
             return `
               <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
