@@ -1063,13 +1063,13 @@
               <div><small style="color: #94a3b8;">Percentage</small><br><strong style="font-size: 1.2rem; color: #38bdf8;">${data.percentage}%</strong></div>
             </div>
           ` + data.questions.map((q, idx) => {
-            const studentAns = data.studentAnswers[q.id] || 'Not Answered';
+            const studentAns = data.studentAnswers[q.id] || data.studentAnswers[String(q.id)] || data.studentAnswers[Number(q.id)] || 'Not Answered';
             const sAnsStr = Array.isArray(studentAns) ? [...studentAns].sort().join(',') : String(studentAns).trim();
             const cAnsStr = String(q.correct_option).trim();
             const isCorrect = sAnsStr === cAnsStr;
 
             const displayAns = Array.isArray(studentAns) ? studentAns.join(', ') : (studentAns === 'Not Answered' ? 'Not Answered' : studentAns);
-            
+
             return `
               <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
