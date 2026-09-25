@@ -4,14 +4,19 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const fs = require('fs');
+const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Database connection using individual Render / Railway environment variables
+// Database connection
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -25,7 +30,6 @@ const pool = mysql.createPool({
   connectTimeout: 20000
 });
 
-// Diagnostic test on startup
 pool.getConnection()
   .then(conn => {
     console.log('✅ Connected to MySQL Database successfully');
@@ -35,7 +39,6 @@ pool.getConnection()
     console.error('❌ Database Connection Error:', err.message);
   });
 
-// Auth Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader.split(' '));
@@ -123,6 +126,61 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
+// AI Question Generator Endpoint with File/Document Support
+app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
+  try {
+    const { topic, count = 3 } = req.body;
+    const file = req.file;
+
+    let contents = [];
+    let prompt = `Generate exactly ${count} multiple-choice questions based on the provided material and topic: "${topic || 'General document content'}". 
+    Each question must have 4 options (A, B, C, D) and specify the correct option letter (e.g., "A").
+    You MUST return the response strictly as a JSON array of objects with the following keys:
+    - question_text (string)
+    - option_a (string)
+    - option_b (string)
+    - option_c (string)
+    - option_d (string)
+    - correct_option (string, e.g. "C")
+    Do not include any markdown formatting like \`\`\`json in your response, just return the raw JSON array string.`;
+
+    if (file) {
+      const uploadedFile = await ai.files.upload({
+        file: file.path,
+        config: { mimeType: file.mimetype }
+      });
+      contents.push(uploadedFile);
+    }
+
+    contents.push(prompt);
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: contents,
+    });
+
+    if (file && file.path) {
+      fs.unlink(file.path, () => {});
+    }
+
+    let rawText = response.text.trim();
+    if (rawText.startsWith('```json')) {
+      rawText = rawText.replace(/^```json/, '').replace(/```$/, '').trim();
+    } else if (rawText.startsWith('```')) {
+      rawText = rawText.replace(/^```/, '').replace(/```$/, '').trim();
+    }
+
+    const questions = JSON.parse(rawText);
+    res.json({ questions });
+  } catch (err) {
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, () => {});
+    }
+    console.error('AI Document Generation Error:', err);
+    res.status(500).json({ error: 'Failed to generate questions from file: ' + err.message });
+  }
+});
+
 app.delete('/api/faculty/tests/:testId', authenticateToken, async (req, res) => {
   try {
     const testId = req.params.testId;
@@ -146,7 +204,7 @@ app.delete('/api/faculty/submissions/:submissionId/reset', authenticateToken, as
 });
 
 // ----------------------------------------------------
-// AUTHENTICATION ENDPOINTS
+// AUTHENTICATION & STUDENT ENDPOINTS
 // ----------------------------------------------------
 
 app.post('/api/auth/login', async (req, res) => {
@@ -168,10 +226,6 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// ----------------------------------------------------
-// STUDENT & PROFILE ENDPOINTS
-// ----------------------------------------------------
 
 app.get('/api/student/tests', authenticateToken, async (req, res) => {
   try {
@@ -215,7 +269,6 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     let score = 0;
     let total_marks = 0;
     
-    // Normalize keys of incoming answers to strings
     const normalizedAnswers = {};
     if (answers) {
       for (const key of Object.keys(answers)) {
@@ -244,51 +297,6 @@ app.post('/api/results', authenticateToken, async (req, res) => {
     );
 
     res.json({ id: insertRes.insertId, score, total_marks, percentage });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/student/history', authenticateToken, async (req, res) => {
-  try {
-    const query = `
-      SELECT r.id as result_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at, t.title as test_title
-      FROM results r
-      JOIN tests t ON r.test_id = t.id
-      WHERE r.student_id = ?
-      ORDER BY r.created_at DESC
-    `;
-    const [rows] = await pool.query(query, [req.user.id]);
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Detailed Question-by-Question Review Breakdown Endpoint
-app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
-  try {
-    const [results] = await pool.query('SELECT * FROM results WHERE id = ? AND student_id = ?', [req.params.resultId, req.user.id]);
-    if (results.length === 0) return res.status(404).json({ error: 'Result not found' });
-    const result = results[0];
-
-    const [questions] = await pool.query(
-      'SELECT id, question_text, option_a, option_b, option_c, option_d, correct_option, marks FROM questions WHERE test_id = ?',
-      [result.test_id]
-    );
-
-    let studentAnswers = {};
-    try {
-      studentAnswers = JSON.parse(result.answers || '{}');
-    } catch (e) {}
-
-    res.json({
-      score: result.score,
-      total_marks: result.total_marks,
-      percentage: result.percentage,
-      questions: questions,
-      studentAnswers: studentAnswers
-    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
