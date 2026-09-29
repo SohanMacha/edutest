@@ -283,21 +283,43 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
   }
 });
 
-// Get Student Leaderboard
+// Get Student Leaderboard (Overall or Test-Specific)
 app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT u.name, u.roll_number, u.department, 
-             SUM(r.score) as total_score, 
-             ROUND(AVG(r.percentage), 1) as avg_percentage,
-             COUNT(r.id) as tests_taken
-      FROM results r
-      JOIN users u ON r.student_id = u.id
-      WHERE u.role = 'student'
-      GROUP BY u.id, u.name, u.roll_number, u.department
-      ORDER BY avg_percentage DESC, total_score DESC
-      LIMIT 20
-    `);
+    const testId = req.query.testId;
+
+    let query = '';
+    let params = [];
+
+    if (testId && testId !== 'all') {
+      query = `
+        SELECT u.name, u.roll_number, u.department, 
+               r.score as total_score, 
+               r.percentage as avg_percentage,
+               1 as tests_taken
+        FROM results r
+        JOIN users u ON r.student_id = u.id
+        WHERE u.role = 'student' AND r.test_id = ?
+        ORDER BY r.percentage DESC, r.score DESC
+        LIMIT 20
+      `;
+      params = [testId];
+    } else {
+      query = `
+        SELECT u.name, u.roll_number, u.department, 
+               SUM(r.score) as total_score, 
+               ROUND(AVG(r.percentage), 1) as avg_percentage,
+               COUNT(r.id) as tests_taken
+        FROM results r
+        JOIN users u ON r.student_id = u.id
+        WHERE u.role = 'student'
+        GROUP BY u.id, u.name, u.roll_number, u.department
+        ORDER BY avg_percentage DESC, total_score DESC
+        LIMIT 20
+      `;
+    }
+
+    const [rows] = await pool.query(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

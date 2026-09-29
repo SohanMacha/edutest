@@ -507,8 +507,17 @@
     <!-- SECTION 3: LEADERBOARD -->
     <section id="tabLeaderboard" class="student-view" style="display: none;">
       <div class="panel-card">
-        <h3><i class="fa-solid fa-trophy" style="color: var(--warning);"></i> Student Leaderboard</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Top performing students ranked by overall average percentage and accumulated score.</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3><i class="fa-solid fa-trophy" style="color: var(--warning);"></i> Student Leaderboard</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Top performing students ranked by overall average or specific assessment score.</p>
+          </div>
+          <div>
+            <select id="leaderboardTestFilter" class="form-control" style="width: 220px;" onchange="loadLeaderboard()">
+              <option value="all">🏆 Overall Leaderboard</option>
+            </select>
+          </div>
+        </div>
         <table>
           <thead>
             <tr>
@@ -516,8 +525,8 @@
               <th>Student Name</th>
               <th>Department</th>
               <th>Tests Taken</th>
-              <th>Average Percentage</th>
-              <th>Total Score</th>
+              <th>Percentage</th>
+              <th>Score</th>
             </tr>
           </thead>
           <tbody id="leaderboardTableBody">
@@ -681,7 +690,7 @@
         document.getElementById('studentSubheading').textContent = 'View your scores, review answers, and download official PDF marksheets';
       } else if (sectionId === 'tabLeaderboard') {
         document.getElementById('studentHeading').textContent = 'Student Leaderboard';
-        document.getElementById('studentSubheading').textContent = 'Top performing students ranked across all completed assessments';
+        document.getElementById('studentSubheading').textContent = 'Top performing students ranked across all or specific completed assessments';
       } else {
         document.getElementById('studentHeading').textContent = 'My Academic Profile';
         document.getElementById('studentSubheading').textContent = 'Review and modify your registered academic records';
@@ -990,14 +999,33 @@
 
       window.loadLeaderboard = async function() {
         try {
-          const res = await fetch(`${API_BASE}/api/student/leaderboard`, {
+          const filterSelect = document.getElementById('leaderboardTestFilter');
+          const selectedTestId = filterSelect ? filterSelect.value : 'all';
+
+          if (filterSelect && filterSelect.options.length <= 1) {
+            const testsRes = await fetch(`${API_BASE}/api/student/tests`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const tests = await testsRes.json();
+            if (tests && tests.length > 0) {
+              tests.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `📝 ${t.title}`;
+                filterSelect.appendChild(opt);
+              });
+              filterSelect.value = selectedTestId;
+            }
+          }
+
+          const res = await fetch(`${API_BASE}/api/student/leaderboard?testId=${selectedTestId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const leaders = await res.json();
           const tbody = document.getElementById('leaderboardTableBody');
 
           if (!leaders || leaders.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No leaderboard records available yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No leaderboard records available for this selection yet.</td></tr>`;
             return;
           }
 
@@ -1012,7 +1040,7 @@
                 <td><strong>${rankBadge}</strong></td>
                 <td>${l.name}</td>
                 <td>${l.department || 'N/A'}</td>
-                <td>${l.tests_taken}</td>
+                <td>${selectedTestId === 'all' ? l.tests_taken : '1'}</td>
                 <td><strong style="color: var(--primary);">${l.avg_percentage}%</strong></td>
                 <td>${l.total_score}</td>
               </tr>
