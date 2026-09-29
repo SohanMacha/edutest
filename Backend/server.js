@@ -154,7 +154,6 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    // Multi-model fallback loop to automatically handle capacity limits or version updates
     const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
     let response = null;
     let lastError = null;
@@ -166,7 +165,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
           model: modelName,
           contents: contents,
         });
-        break; // Success! Exit loop
+        break; 
       } catch (modelErr) {
         console.warn(`Model ${modelName} failed or unavailable:`, modelErr.message);
         lastError = modelErr;
@@ -279,6 +278,48 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
       ORDER BY r.created_at DESC
     `, [req.user.id]);
     res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get Detailed Breakdown for a Specific Student Result
+app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
+  try {
+    const resultId = req.params.resultId;
+    
+    const [results] = await pool.query(
+      'SELECT r.*, t.title as test_title FROM results r JOIN tests t ON r.test_id = t.id WHERE r.id = ? AND r.student_id = ?',
+      [resultId, req.user.id]
+    );
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Result record not found' });
+    }
+
+    const resultRecord = results[0];
+
+    const [questions] = await pool.query(
+      'SELECT id, question_text, option_a, option_b, option_c, option_d, correct_option, marks FROM questions WHERE test_id = ?',
+      [resultRecord.test_id]
+    );
+
+    let studentAnswers = {};
+    try {
+      if (resultRecord.answers) {
+        studentAnswers = JSON.parse(resultRecord.answers);
+      }
+    } catch (e) {
+      studentAnswers = {};
+    }
+
+    res.json({
+      score: resultRecord.score,
+      total_marks: resultRecord.total_marks,
+      percentage: resultRecord.percentage,
+      questions: questions,
+      studentAnswers: studentAnswers
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
