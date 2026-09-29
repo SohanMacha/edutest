@@ -918,7 +918,7 @@
 
       window.loadHistory = async function() {
         try {
-          const res = await fetch(`${API_BASE}/api/student/history`, {
+          const res = await fetch(`${API_BASE}/api/student/results`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const history = await res.json();
@@ -942,7 +942,7 @@
               </td>
               <td>${new Date(h.created_at).toLocaleDateString()}</td>
               <td style="display: flex; gap: 8px;">
-                <button class="btn-review" onclick="openReviewModal(${h.result_id})">
+                <button class="btn-review" onclick="openReviewModal(${h.submission_id})">
                   <i class="fa-solid fa-magnifying-glass"></i> Review
                 </button>
                 <button class="btn-review" style="background: rgba(16, 185, 129, 0.15); border-color: var(--primary); color: var(--primary);" 
@@ -1053,7 +1053,7 @@
           const data = await res.json();
 
           if (!res.ok) {
-            container.innerHTML = `<p style="color: #ef4444; text-align: center;">${data.error || 'Failed to load review breakdown. (Note: Older test attempts made before this update do not store answer logs).'}</p>`;
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">${data.error || 'Failed to load review breakdown.'}</p>`;
             return;
           }
 
