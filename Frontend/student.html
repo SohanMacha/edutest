@@ -707,8 +707,8 @@
               <input type="text" id="profStuName" class="form-control" required>
             </div>
             <div class="form-group">
-              <label>Roll Number (Locked)</label>
-              <input type="text" id="profStuRoll" class="form-control" disabled style="opacity: 0.6; cursor: not-allowed;">
+              <label>Roll Number / Student ID</label>
+              <input type="text" id="profStuRoll" class="form-control" required placeholder="Enter unique roll number">
             </div>
           </div>
 
@@ -1364,7 +1364,7 @@
 
           document.getElementById('profStuName').value = user.name || '';
           document.getElementById('profStuEmail').value = user.email || '';
-          document.getElementById('profStuRoll').value = user.roll_number || 'N/A';
+          document.getElementById('profStuRoll').value = user.roll_number || '';
           document.getElementById('profStuPhone').value = user.phone || '';
           document.getElementById('profStuDept').value = user.department || '';
           document.getElementById('profStuYear').value = user.year_of_study || 'First Year';
@@ -1379,6 +1379,7 @@
         e.preventDefault();
         const payload = {
           name: document.getElementById('profStuName').value.trim(),
+          roll_number: document.getElementById('profStuRoll').value.trim(),
           phone: document.getElementById('profStuPhone').value.trim(),
           department: document.getElementById('profStuDept').value.trim(),
           year_of_study: document.getElementById('profStuYear').value,

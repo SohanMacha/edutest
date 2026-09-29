@@ -75,10 +75,10 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Secure User Registration Route with Faculty Passcode Check
+// Secure User Registration Route with Roll Number & Faculty Passcode Check
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, role, faculty_passcode } = req.body;
+    const { name, roll_number, email, password, role, faculty_passcode } = req.body;
 
     // Check if user already exists
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
@@ -97,10 +97,10 @@ app.post('/api/auth/register', async (req, res) => {
     // Hash password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into database
+    // Insert user into database including roll_number
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role || 'Student']
+      'INSERT INTO users (name, roll_number, email, password, role) VALUES (?, ?, ?, ?, ?)',
+      [name, roll_number || null, email, hashedPassword, role || 'Student']
     );
 
     res.json({ message: 'Registration successful', userId: result.insertId });
@@ -212,7 +212,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
     let response = null;
     let lastError = null;
 
@@ -335,10 +335,10 @@ app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
                1 as tests_taken
         FROM results r
         JOIN users u ON r.student_id = u.id
-        WHERE u.role = 'faculty' AND r.test_id = ?
+        WHERE u.role = 'student' AND r.test_id = ?
         ORDER BY r.percentage DESC, r.score DESC
         LIMIT 20
-      `.replace("u.role = 'faculty'", "u.role = 'student'");
+      `;
       params = [testId];
     } else {
       query = `
@@ -468,10 +468,10 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
   try {
-    const { name, phone, department, designation, specialization } = req.body;
+    const { name, roll_number, phone, department, year_of_study, semester, division_batch, designation, specialization } = req.body;
     await pool.query(
-      'UPDATE users SET name=?, phone=?, department=?, designation=?, specialization=? WHERE id=?',
-      [name, phone, department, designation, specialization, req.user.id]
+      'UPDATE users SET name=?, roll_number=?, phone=?, department=?, year_of_study=?, semester=?, division_batch=?, designation=?, specialization=? WHERE id=?',
+      [name, roll_number || null, phone, department, year_of_study || null, semester || null, division_batch || null, designation || null, specialization || null, req.user.id]
     );
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
