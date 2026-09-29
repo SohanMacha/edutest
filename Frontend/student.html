@@ -25,6 +25,8 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     body {
@@ -54,6 +56,7 @@
       gap: 12px;
       padding: 0 12px 24px;
       border-bottom: 1px solid var(--border-color);
+      letter-spacing: -0.025em;
     }
 
     .nav-links {
@@ -72,7 +75,7 @@
       color: var(--text-muted);
       border-radius: 8px;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 500;
       transition: all 0.2s ease;
       text-align: left;
@@ -97,10 +100,12 @@
       gap: 10px;
       width: 100%;
       font-weight: 600;
+      transition: all 0.2s ease;
     }
 
     .btn-logout:hover {
       background: rgba(239, 68, 68, 0.1);
+      border-color: var(--danger);
     }
 
     .main-content {
@@ -116,6 +121,12 @@
       margin-bottom: 32px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 90;
     }
 
     .user-profile {
@@ -128,21 +139,24 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
       font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     .panel-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 24px;
       margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      transition: all 0.25s ease;
     }
 
     .test-grid {
@@ -155,12 +169,19 @@
     .test-item {
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       gap: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .test-item:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15);
     }
 
     .test-title {
@@ -179,27 +200,30 @@
       background: var(--primary);
       color: white;
       border: none;
-      padding: 10px;
-      border-radius: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       text-align: center;
-      transition: background 0.2s;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.25s ease;
     }
 
     .btn-start:hover {
       background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
     }
 
     .btn-review {
-      background: rgba(56, 189, 248, 0.15);
+      background: rgba(56, 189, 248, 0.12);
       border: 1px solid var(--info);
       color: var(--info);
       padding: 6px 12px;
       border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
     .btn-review:hover {
@@ -208,11 +232,11 @@
     }
 
     .btn-completed {
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.12);
       border: 1px solid var(--primary);
       color: var(--primary);
       padding: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: 600;
       text-align: center;
       cursor: not-allowed;
@@ -229,15 +253,16 @@
     }
 
     th, td {
-      padding: 12px 16px;
+      padding: 14px 16px;
       text-align: left;
       border-bottom: 1px solid var(--border-color);
     }
 
     th {
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     td {
@@ -252,22 +277,25 @@
       display: block;
       font-size: 0.85rem;
       color: var(--text-muted);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
+      font-weight: 500;
     }
 
     .form-control {
       width: 100%;
       padding: 10px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       background: var(--bg-dark);
       border: 1px solid var(--border-color);
       color: var(--text-main);
       font-size: 0.95rem;
+      transition: all 0.2s ease;
     }
 
     .form-control:focus {
       outline: none;
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
     }
 
     #examSection {
@@ -279,7 +307,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--card-bg);
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 18px 24px;
@@ -322,6 +352,7 @@
       border-radius: 12px;
       padding: 24px;
       margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     .option-label {
@@ -334,11 +365,12 @@
       border: 1px solid var(--border-color);
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
     .option-label:hover {
       border-color: var(--primary);
+      background: rgba(16, 185, 129, 0.05);
     }
 
     .option-label input[type="checkbox"] {
@@ -353,7 +385,8 @@
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       justify-content: center;
       align-items: center;
       z-index: 1000;
@@ -363,12 +396,13 @@
     .modal {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
+      border-radius: 16px;
       max-width: 680px;
       width: 100%;
       max-height: 85vh;
       overflow-y: auto;
       padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .modal-header {
@@ -400,6 +434,7 @@
       font-size: 1.8rem;
       font-weight: 700;
       color: var(--primary);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
     }
 
     .cheat-warning-box {
@@ -593,7 +628,7 @@
             <input type="text" id="profStuBatch" class="form-control" placeholder="e.g. Div A / Batch B2">
           </div>
 
-          <button type="submit" class="btn-start" style="margin-top: 10px; padding: 10px 20px;">
+          <button type="submit" class="btn-start" style="margin-top: 10px; padding: 12px 24px;">
             <i class="fa-solid fa-floppy-disk"></i> Save Profile Details
           </button>
         </form>
@@ -743,13 +778,13 @@
               `;
             } else if (t.test_state === 'UPCOMING') {
               actionHtml = `
-                <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: var(--warning); padding: 10px; border-radius: 6px; font-weight: 600; text-align: center;">
+                <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: var(--warning); padding: 10px; border-radius: 8px; font-weight: 600; text-align: center;">
                   <i class="fa-regular fa-clock"></i> Starts on ${new Date(t.start_date).toLocaleDateString()}
                 </div>
               `;
             } else if (t.test_state === 'EXPIRED') {
               actionHtml = `
-                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 10px; border-radius: 6px; font-weight: 600; text-align: center;">
+                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 10px; border-radius: 8px; font-weight: 600; text-align: center;">
                   <i class="fa-solid fa-lock"></i> Assessment Expired
                 </div>
               `;

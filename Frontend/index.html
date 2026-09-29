@@ -22,6 +22,8 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
@@ -34,23 +36,26 @@
         }
 
         .container {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 10px 15px rgba(0,0,0,0.2);
             position: relative;
             overflow: hidden;
             width: 768px;
             max-width: 100%;
             min-height: 520px;
             margin: 20px;
+            transition: all 0.3s ease;
         }
 
         .form-container {
             position: absolute;
             top: 0;
             height: 100%;
-            transition: all 0.6s ease-in-out;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sign-in-container {
@@ -89,7 +94,7 @@
             width: 50%;
             height: 100%;
             overflow: hidden;
-            transition: transform 0.6s ease-in-out;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 100;
         }
 
@@ -105,7 +110,7 @@
             height: 100%;
             width: 200%;
             transform: translateX(0);
-            transition: transform 0.6s ease-in-out;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .container.right-panel-active .overlay {
@@ -154,9 +159,10 @@
         }
 
         h2 {
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 6px;
             font-size: 24px;
+            letter-spacing: -0.025em;
         }
 
         p.subtitle {
@@ -166,7 +172,7 @@
         }
 
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             text-align: left;
             width: 100%;
         }
@@ -174,42 +180,49 @@
         label {
             display: block;
             font-size: 12px;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         input, select {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
-            padding: 9px 12px;
+            padding: 10px 14px;
             width: 100%;
-            border-radius: 6px;
+            border-radius: 8px;
             color: var(--text-main);
             font-size: 13px;
+            transition: all 0.2s ease;
         }
 
         input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
 
         .btn {
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             background: var(--primary);
             color: #FFFFFF;
             font-size: 13px;
-            font-weight: bold;
-            padding: 11px 45px;
-            letter-spacing: 1px;
+            font-weight: 600;
+            padding: 12px 45px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 12px;
             width: 100%;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+            transition: all 0.25s ease;
         }
 
         .btn:hover {
             background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
         }
 
         .ghost {
@@ -219,20 +232,22 @@
             margin-top: 15px;
             width: auto;
             padding: 10px 30px;
+            box-shadow: none;
         }
 
         .ghost:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
         }
 
         .error-msg {
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.12);
             border: 1px solid var(--danger);
             color: #fca5a5;
-            padding: 8px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 8px;
             font-size: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: none;
             width: 100%;
         }
@@ -268,7 +283,6 @@
                     </select>
                 </div>
 
-                <!-- Hidden Passcode Field for Faculty -->
                 <div class="form-group" id="facultyPasscodeGroup" style="display: none;">
                     <label style="color: var(--warning);">Faculty Secret Passcode</label>
                     <input type="password" id="regPasscode" placeholder="Enter staff passcode">
@@ -335,7 +349,6 @@
             }
         }
 
-        // Handle Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -364,7 +377,6 @@
             }
         });
 
-        // Handle Registration
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('regName').value;
