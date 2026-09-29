@@ -442,7 +442,7 @@
         border: 1px solid var(--border-color);
         padding: 10px 16px;
         border-radius: 10px;
-        width: 300px;
+        width: 260px;
       }
 
       .search-box input {
@@ -818,11 +818,17 @@
       <section class="panel-card">
         <div class="table-toolbar">
           <h3><i class="fa-solid fa-square-poll-vertical"></i> Assessment Submissions & Integrity Report</h3>
-          <div style="display: flex; gap: 12px; align-items: center;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <!-- TEST SELECTOR FOR INDIVIDUAL CSV EXPORT -->
+            <select id="exportTestSelect" class="form-control" style="width: 210px; padding: 9px 12px; font-size: 0.85rem;">
+              <option value="all">📝 All Tests Combined</option>
+            </select>
+
             <div class="search-box">
               <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-              <input type="text" id="searchInput" placeholder="Search student, roll no, quiz...">
+              <input type="text" id="searchInput" placeholder="Search student, roll...">
             </div>
+            
             <button class="btn-export" id="exportCsvBtn">
               <i class="fa-solid fa-file-excel"></i> Export CSV
             </button>
@@ -1301,7 +1307,7 @@
             <td><strong>${s.roll_number || 'N/A'}</strong></td>
             <td><strong>${s.student_name}</strong><br><small style="color: var(--text-muted);">${s.student_email}</small></td>
             <td>${s.test_title}</td>
-            <td>${s.score} / ${s.total_marks}</td>
+            <td>${s.score} /${s.total_marks}</td>
             <td><strong>${s.percentage}%</strong></td>
             <td>
               ${s.warnings_count > 0 
@@ -1322,6 +1328,14 @@
         `).join('');
       }
 
+      async function populateExportTestDropdown(tests) {
+        const select = document.getElementById('exportTestSelect');
+        if (select && tests && tests.length > 0) {
+          select.innerHTML = '<option value="all">📝 All Tests Combined</option>' + 
+            tests.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+        }
+      }
+
       window.loadData = async function() {
         try {
           const statsRes = await fetch(`${API_BASE}/api/faculty/stats`, {
@@ -1339,6 +1353,7 @@
           });
           if (testsRes.ok) {
             const tests = await testsRes.json();
+            populateExportTestDropdown(tests);
             const overviewBody = document.getElementById('overviewTestBody');
             const allBody = document.getElementById('allAssessmentsTableBody');
 
@@ -1390,7 +1405,7 @@
                   <td>${st.email}</td>
                   <td>${st.phone || 'N/A'}</td>
                   <td>${st.department || 'N/A'}</td>
-                  <td>${st.division_batch || 'N/A'} (${st.semester || 'N/A'})</td>
+                  <td>${st.division_batch \vert{}\vert{} 'N/A'} (${st.semester || 'N/A'})</td>
                   <td><span style="color: var(--info); font-weight: 600;">${st.tests_taken} test(s)</span></td>
                 </tr>
               `).join('');
@@ -1449,10 +1464,20 @@
           return;
         }
 
+        const selectedTestId = document.getElementById('exportTestSelect').value;
+        const submissionsToExport = selectedTestId === 'all' 
+          ? globalSubmissions 
+          : globalSubmissions.filter(s => String(s.test_id) === String(selectedTestId));
+
+        if (submissionsToExport.length === 0) {
+          alert('No submissions found for this specific test.');
+          return;
+        }
+
         const headers = ['Submission ID', 'Roll Number', 'Student Name', 'Email', 'Assessment Title', 'Score', 'Total Marks', 'Percentage', 'Cheat Warnings'];
         const csvRows = [headers.join(',')];
 
-        globalSubmissions.forEach(s => {
+        submissionsToExport.forEach(s => {
           const row = [
             s.submission_id,
             `"${(s.roll_number || '').replace(/"/g, '""')}"`,
@@ -1467,11 +1492,12 @@
           csvRows.push(row.join(','));
         });
 
+        const testSlug = selectedTestId === 'all' ? 'All_Tests' : `Test_${selectedTestId}`;
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `EduTest_Submissions_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute('download', `EduTest_Report_${testSlug}_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

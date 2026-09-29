@@ -75,29 +75,24 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Secure User Registration Route with Roll Number & Faculty Passcode Check
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, roll_number, email, password, role, faculty_passcode } = req.body;
 
-    // Check if user already exists
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'Email is already registered' });
     }
 
-    // Enforce Faculty Passcode Security
     if (role && role.toLowerCase() === 'faculty') {
-      const SECRET_PASSCODE = 'EDUTEST_STAFF_2026'; // Changeable staff passcode
+      const SECRET_PASSCODE = 'EDUTEST_STAFF_2026';
       if (!faculty_passcode || faculty_passcode !== SECRET_PASSCODE) {
         return res.status(403).json({ error: 'Unauthorized: Invalid or missing faculty secret passcode.' });
       }
     }
 
-    // Hash password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into database including roll_number
     const [result] = await pool.query(
       'INSERT INTO users (name, roll_number, email, password, role) VALUES (?, ?, ?, ?, ?)',
       [name, roll_number || null, email, hashedPassword, role || 'Student']
@@ -146,7 +141,7 @@ app.get('/api/faculty/students', authenticateToken, async (req, res) => {
 app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT r.id as submission_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
+      SELECT r.id as submission_id, r.test_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
              t.title as test_title, u.name as student_name, u.email as student_email, u.roll_number
       FROM results r
       JOIN tests t ON r.test_id = t.id
@@ -184,7 +179,6 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// AI Question Generator Endpoint with File Upload & Multi-Model Fallback
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
     const { topic, count = 3 } = req.body;
@@ -218,14 +212,12 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     for (const modelName of modelsToTry) {
       try {
-        console.log(`Trying Gemini model: ${modelName}`);
         response = await ai.models.generateContent({
           model: modelName,
           contents: contents,
         });
         break; 
       } catch (modelErr) {
-        console.warn(`Model ${modelName} failed or unavailable:`, modelErr.message);
         lastError = modelErr;
       }
     }
@@ -251,7 +243,6 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     if (req.file && req.file.path) {
       fs.unlink(req.file.path, () => {});
     }
-    console.error('AI Document Generation Error:', err);
     res.status(500).json({ error: 'Failed to generate questions from file: ' + err.message });
   }
 });
