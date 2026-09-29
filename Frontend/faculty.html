@@ -819,7 +819,7 @@
         <div class="table-toolbar">
           <h3><i class="fa-solid fa-square-poll-vertical"></i> Assessment Submissions & Integrity Report</h3>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <!-- TEST SELECTOR DROPDOWN FOR INDIVIDUAL EXPORTS -->
+            <!-- TEST SELECTOR DROPDOWN FOR INDIVIDUAL EXPORTS & REAL-TIME TABLE FILTERING -->
             <select id="exportTestSelect" class="form-control" style="width: 200px; padding: 9px 12px; font-size: 0.85rem;">
               <option value="all">📝 All Tests Combined</option>
             </select>
@@ -1298,7 +1298,7 @@
       function renderSubmissions(list) {
         const subBody = document.getElementById('submissionsTableBody');
         if (!list || list.length === 0) {
-          subBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No submissions found.</td></tr>`;
+          subBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No submissions found for this selection.</td></tr>`;
           return;
         }
 
@@ -1335,6 +1335,37 @@
             tests.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
         }
       }
+
+      // Helper function to filter submissions based on dropdown test selection & search query
+      function getFilteredSubmissions() {
+        const selectedTestId = document.getElementById('exportTestSelect').value;
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+
+        let filtered = selectedTestId === 'all' 
+          ? globalSubmissions 
+          : globalSubmissions.filter(s => String(s.test_id) === String(selectedTestId));
+
+        if (searchQuery) {
+          filtered = filtered.filter(s => 
+            (s.student_name && s.student_name.toLowerCase().includes(searchQuery)) ||
+            (s.student_email && s.student_email.toLowerCase().includes(searchQuery)) ||
+            (s.roll_number && s.roll_number.toLowerCase().includes(searchQuery)) ||
+            (s.test_title && s.test_title.toLowerCase().includes(searchQuery))
+          );
+        }
+
+        return filtered;
+      }
+
+      // Live filter table when test dropdown changes
+      document.getElementById('exportTestSelect').addEventListener('change', () => {
+        renderSubmissions(getFilteredSubmissions());
+      });
+
+      // Live filter table when typing in search box
+      document.getElementById('searchInput').addEventListener('input', () => {
+        renderSubmissions(getFilteredSubmissions());
+      });
 
       window.loadData = async function() {
         try {
@@ -1417,7 +1448,7 @@
           });
           if (subRes.ok) {
             globalSubmissions = await subRes.json();
-            renderSubmissions(globalSubmissions);
+            renderSubmissions(getFilteredSubmissions());
             updateAnalyticsCharts(globalSubmissions);
           }
         } catch (err) {
@@ -1447,33 +1478,15 @@
         }
       };
 
-      document.getElementById('searchInput').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        const filtered = globalSubmissions.filter(s => 
-          (s.student_name && s.student_name.toLowerCase().includes(query)) ||
-          (s.student_email && s.student_email.toLowerCase().includes(query)) ||
-          (s.roll_number && s.roll_number.toLowerCase().includes(query)) ||
-          (s.test_title && s.test_title.toLowerCase().includes(query))
-        );
-        renderSubmissions(filtered);
-      });
-
       document.getElementById('exportCsvBtn').addEventListener('click', () => {
-        if (!globalSubmissions || globalSubmissions.length === 0) {
-          alert('No submissions available to export.');
+        const submissionsToExport = getFilteredSubmissions();
+
+        if (!submissionsToExport || submissionsToExport.length === 0) {
+          alert('No submissions available for export with the current selection.');
           return;
         }
 
         const selectedTestId = document.getElementById('exportTestSelect').value;
-        const submissionsToExport = selectedTestId === 'all' 
-          ? globalSubmissions 
-          : globalSubmissions.filter(s => String(s.test_id) === String(selectedTestId));
-
-        if (submissionsToExport.length === 0) {
-          alert('No submissions found for this specific test.');
-          return;
-        }
-
         const headers = ['Submission ID', 'Roll Number', 'Student Name', 'Email', 'Assessment Title', 'Score', 'Total Marks', 'Percentage', 'Cheat Warnings'];
         const csvRows = [headers.join(',')];
 
