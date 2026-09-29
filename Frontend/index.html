@@ -37,7 +37,6 @@
             overflow: hidden;
         }
 
-        /* Enhanced Interactive Mouse-Following Glow & Aurora Background */
         .aurora-bg {
             position: absolute;
             inset: 0;
@@ -53,34 +52,10 @@
             animation: floatBlob 12s infinite alternate ease-in-out;
         }
 
-        .blob-1 {
-            width: 500px;
-            height: 500px;
-            background: #2563eb;
-            top: -10%;
-            left: -10%;
-        }
+        .blob-1 { width: 500px; height: 500px; background: #2563eb; top: -10%; left: -10%; }
+        .blob-2 { width: 550px; height: 550px; background: #059669; bottom: -15%; right: -10%; animation-delay: -4s; }
+        .blob-3 { width: 400px; height: 400px; background: #7c3aed; top: 40%; left: 50%; transform: translate(-50%, -50%); animation-delay: -8s; }
 
-        .blob-2 {
-            width: 550px;
-            height: 550px;
-            background: #059669;
-            bottom: -15%;
-            right: -10%;
-            animation-delay: -4s;
-        }
-
-        .blob-3 {
-            width: 400px;
-            height: 400px;
-            background: #7c3aed;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -8s;
-        }
-
-        /* Mouse Follower Spotlight */
         #cursorGlow {
             position: absolute;
             width: 400px;
@@ -89,7 +64,6 @@
             border-radius: 50%;
             pointer-events: none;
             transform: translate(-50%, -50%);
-            transition: width 0.2s, height 0.2s;
             z-index: 1;
         }
 
@@ -109,7 +83,7 @@
             overflow: hidden;
             width: 860px;
             max-width: 92%;
-            height: 560px;
+            height: 580px;
             margin: 20px;
             z-index: 10;
         }
@@ -122,32 +96,10 @@
             transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .sign-in-container {
-            left: 0;
-            z-index: 2;
-            pointer-events: auto;
-        }
-
-        .container.right-panel-active .sign-in-container {
-            transform: translateX(100%);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .sign-up-container {
-            left: 0;
-            opacity: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .container.right-panel-active .sign-up-container {
-            transform: translateX(100%);
-            opacity: 1;
-            z-index: 5;
-            pointer-events: auto;
-            animation: show 0.6s;
-        }
+        .sign-in-container { left: 0; z-index: 2; pointer-events: auto; }
+        .container.right-panel-active .sign-in-container { transform: translateX(100%); opacity: 0; pointer-events: none; }
+        .sign-up-container { left: 0; opacity: 0; z-index: 1; pointer-events: none; }
+        .container.right-panel-active .sign-up-container { transform: translateX(100%); opacity: 1; z-index: 5; pointer-events: auto; animation: show 0.6s; }
 
         @keyframes show {
             0%, 49% { opacity: 0; z-index: 1; }
@@ -165,9 +117,7 @@
             z-index: 100;
         }
 
-        .container.right-panel-active .overlay-container {
-            transform: translateX(-100%);
-        }
+        .container.right-panel-active .overlay-container { transform: translateX(-100%); }
 
         .overlay {
             background: linear-gradient(135deg, #1d4ed8, #2563eb, #047857);
@@ -180,9 +130,7 @@
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .container.right-panel-active .overlay {
-            transform: translateX(50%);
-        }
+        .container.right-panel-active .overlay { transform: translateX(50%); }
 
         .overlay-panel {
             position: absolute;
@@ -198,28 +146,16 @@
             transition: transform 0.6s ease-in-out;
         }
 
-        .overlay-left {
-            transform: translateX(-20%);
-        }
-
-        .container.right-panel-active .overlay-left {
-            transform: translateX(0);
-        }
-
-        .overlay-right {
-            right: 0;
-            transform: translateX(0);
-        }
-
-        .container.right-panel-active .overlay-right {
-            transform: translateX(20%);
-        }
+        .overlay-left { transform: translateX(-20%); }
+        .container.right-panel-active .overlay-left { transform: translateX(0); }
+        .overlay-right { right: 0; transform: translateX(0); }
+        .container.right-panel-active .overlay-right { transform: translateX(20%); }
 
         form {
             background: transparent;
             display: flex;
             flex-direction: column;
-            padding: 30px 40px;
+            padding: 24px 36px;
             height: 100%;
             justify-content: center;
             overflow-y: auto;
@@ -229,119 +165,55 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
-        .logo-header i {
-            font-size: 1.35rem;
-            filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));
-        }
+        h2 { font-weight: 700; margin-bottom: 4px; font-size: 20px; }
+        p.subtitle { color: var(--text-muted); font-size: 12px; margin-bottom: 12px; }
 
-        h2 {
-            font-weight: 700;
-            margin-bottom: 4px;
-            font-size: 22px;
-            letter-spacing: -0.025em;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 12.5px;
-            margin-bottom: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 10px;
-            text-align: left;
-            width: 100%;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            margin-bottom: 3px;
-            color: var(--text-muted);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+        .form-group { margin-bottom: 10px; text-align: left; width: 100%; }
+        label { display: block; font-size: 10.5px; margin-bottom: 3px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; }
 
         input, select {
             background: rgba(15, 23, 42, 0.7);
             border: 1px solid var(--border-color);
-            padding: 9px 14px;
+            padding: 8px 12px;
             width: 100%;
-            border-radius: 10px;
+            border-radius: 8px;
             color: var(--text-main);
-            font-size: 13px;
+            font-size: 12.5px;
             transition: all 0.25s ease;
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-            background: rgba(15, 23, 42, 0.9);
-        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); background: rgba(15, 23, 42, 0.9); }
 
         .btn {
-            border-radius: 10px;
+            border-radius: 8px;
             border: none;
             background: linear-gradient(135deg, #10b981, #059669);
             color: #FFFFFF;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 600;
-            padding: 11px;
-            letter-spacing: 0.5px;
+            padding: 10px;
             text-transform: uppercase;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 6px;
             width: 100%;
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
             transition: all 0.25s ease;
         }
 
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
-            filter: brightness(1.05);
-        }
-
-        .ghost {
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.85);
-            color: #FFFFFF;
-            margin-top: 15px;
-            width: auto;
-            padding: 10px 30px;
-            box-shadow: none;
-        }
-
-        .ghost:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: #ffffff;
-            transform: translateY(-1px);
-        }
-
-        .error-msg {
-            background: rgba(239, 68, 68, 0.12);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-bottom: 10px;
-            display: none;
-            width: 100%;
-        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
+        .ghost { background: transparent; border: 2px solid rgba(255, 255, 255, 0.85); color: #FFFFFF; margin-top: 15px; width: auto; padding: 10px 30px; box-shadow: none; }
+        .ghost:hover { background: rgba(255, 255, 255, 0.12); border-color: #ffffff; }
+        .error-msg { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; margin-bottom: 8px; display: none; width: 100%; }
     </style>
 </head>
 <body>
 
-    <!-- Live Animated Aurora Background & Mouse Follower -->
     <div class="aurora-bg">
         <div id="cursorGlow"></div>
         <div class="blob blob-1"></div>
@@ -353,10 +225,7 @@
         <!-- SIGN UP FORM -->
         <div class="form-container sign-up-container">
             <form id="registerForm">
-                <div class="logo-header">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                    <span>EduTest</span>
-                </div>
+                <div class="logo-header"><i class="fa-solid fa-graduation-cap"></i><span>EduTest</span></div>
                 <h2>Create Account</h2>
                 <p class="subtitle">Join the assessment platform</p>
                 <div id="regErrorBox" class="error-msg"></div>
@@ -364,6 +233,10 @@
                 <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" id="regName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Roll Number / Student ID</label>
+                    <input type="text" id="regRoll" required placeholder="e.g. VU2F252699">
                 </div>
                 <div class="form-group">
                     <label>Email Address</label>
@@ -393,10 +266,7 @@
         <!-- SIGN IN FORM -->
         <div class="form-container sign-in-container">
             <form id="loginForm">
-                <div class="logo-header">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                    <span>EduTest</span>
-                </div>
+                <div class="logo-header"><i class="fa-solid fa-graduation-cap"></i><span>EduTest</span></div>
                 <h2>Sign In</h2>
                 <p class="subtitle">Access your portal dashboard</p>
                 <div id="loginErrorBox" class="error-msg"></div>
@@ -413,7 +283,6 @@
             </form>
         </div>
 
-        <!-- SLIDING OVERLAY PANEL -->
         <div class="overlay-container">
             <div class="overlay">
                 <div class="overlay-panel overlay-left">
@@ -431,7 +300,6 @@
     </div>
 
     <script>
-        // Mouse-following cursor light tracker
         const cursorGlow = document.getElementById('cursorGlow');
         window.addEventListener('mousemove', (e) => {
             cursorGlow.style.left = `${e.clientX}px`;
@@ -441,21 +309,11 @@
         const API_URL = 'https://edutest-0y0z.onrender.com';
         const container = document.getElementById('mainContainer');
 
-        document.getElementById('signUpBtn').addEventListener('click', () => {
-            container.classList.add("right-panel-active");
-        });
-
-        document.getElementById('signInBtn').addEventListener('click', () => {
-            container.classList.remove("right-panel-active");
-        });
+        document.getElementById('signUpBtn').addEventListener('click', () => container.classList.add("right-panel-active"));
+        document.getElementById('signInBtn').addEventListener('click', () => container.classList.remove("right-panel-active"));
 
         function toggleFacultyPasscode(role) {
-            const passcodeGroup = document.getElementById('facultyPasscodeGroup');
-            if (role === 'Faculty') {
-                passcodeGroup.style.display = 'block';
-            } else {
-                passcodeGroup.style.display = 'none';
-            }
+            document.getElementById('facultyPasscodeGroup').style.display = (role === 'Faculty') ? 'block' : 'none';
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -489,6 +347,7 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('regName').value;
+            const roll_number = document.getElementById('regRoll').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
@@ -499,7 +358,7 @@
                 const response = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, role, faculty_passcode })
+                    body: JSON.stringify({ name, roll_number, email, password, role, faculty_passcode })
                 });
 
                 const data = await response.json();
