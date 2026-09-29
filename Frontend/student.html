@@ -10,8 +10,8 @@
     :root {
       --primary: #10b981;
       --primary-dark: #059669;
-      --bg-dark: #070d1b; /* Slightly deeper luxury dark */
-      --card-bg: #111827; /* Richer slate card background */
+      --bg-dark: #050b14;
+      --card-bg: rgba(17, 24, 39, 0.75);
       --text-main: #f9fafb;
       --text-muted: #9ca3af;
       --border-color: rgba(255, 255, 255, 0.08);
@@ -35,11 +35,72 @@
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Live Animated Aurora Background & Mouse Follower */
+    .aurora-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .blob {
+      position: absolute;
+      filter: blur(120px);
+      opacity: 0.3;
+      animation: floatBlob 12s infinite alternate ease-in-out;
+    }
+
+    .blob-1 {
+      width: 500px;
+      height: 500px;
+      background: #2563eb;
+      top: -10%;
+      left: -10%;
+    }
+
+    .blob-2 {
+      width: 600px;
+      height: 600px;
+      background: #059669;
+      bottom: -15%;
+      right: -10%;
+      animation-delay: -4s;
+    }
+
+    .blob-3 {
+      width: 450px;
+      height: 450px;
+      background: #7c3aed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -8s;
+    }
+
+    #cursorGlow {
+      position: fixed;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(37, 99, 235, 0.05) 50%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+    }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 40px) scale(1.15); }
     }
 
     .sidebar {
       width: 270px;
-      background: rgba(17, 24, 39, 0.75);
+      background: rgba(17, 24, 39, 0.65);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-right: 1px solid var(--border-color);
@@ -48,6 +109,7 @@
       justify-content: space-between;
       padding: 28px 18px;
       flex-shrink: 0;
+      z-index: 10;
     }
 
     .brand {
@@ -126,6 +188,7 @@
       flex: 1;
       padding: 36px 48px;
       overflow-y: auto;
+      z-index: 10;
     }
 
     .topbar {
@@ -136,7 +199,7 @@
       padding: 20px 24px;
       border-radius: 14px;
       border: 1px solid var(--border-color);
-      background: rgba(17, 24, 39, 0.65);
+      background: rgba(17, 24, 39, 0.55);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       position: sticky;
@@ -167,6 +230,8 @@
 
     .panel-card {
       background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
       border-radius: 16px;
       padding: 28px;
@@ -194,7 +259,7 @@
     }
 
     .test-item {
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.75);
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 22px;
@@ -321,7 +386,7 @@
       width: 100%;
       padding: 11px 16px;
       border-radius: 10px;
-      background: var(--bg-dark);
+      background: rgba(15, 23, 42, 0.7);
       border: 1px solid var(--border-color);
       color: var(--text-main);
       font-size: 0.95rem;
@@ -386,6 +451,8 @@
 
     .exam-question-card {
       background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 28px;
@@ -433,6 +500,8 @@
 
     .modal {
       background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border-color);
       border-radius: 18px;
       max-width: 680px;
@@ -498,6 +567,14 @@
   </style>
 </head>
 <body>
+
+  <!-- Live Animated Aurora Background & Mouse Follower -->
+  <div class="aurora-bg">
+    <div id="cursorGlow"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
 
   <aside class="sidebar">
     <div>
@@ -737,6 +814,13 @@
   </div>
 
   <script>
+    // Mouse-following cursor light tracker
+    const cursorGlow = document.getElementById('cursorGlow');
+    window.addEventListener('mousemove', (e) => {
+      cursorGlow.style.left = `${e.clientX}px`;
+      cursorGlow.style.top = `${e.clientY}px`;
+    });
+
     const API_BASE = 'https://edutest-0y0z.onrender.com';
     let timerInterval = null;
     let currentTestId = null;
