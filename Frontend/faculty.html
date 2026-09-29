@@ -821,6 +821,25 @@
           </div>
         </div>
 
+        <!-- AI QUESTION GENERATOR WIDGET WITH FILE UPLOAD -->
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed var(--info); padding: 16px; border-radius: 10px; margin: 16px 0;">
+          <h4 style="color: var(--info); margin-bottom: 6px; font-size: 0.95rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Question Generator (From Text & Files)</h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Type a topic or upload a study material file (PDF, Notes Image, PPT, etc.) for Gemini to analyze.</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="aiTopicInput" class="form-control" placeholder="Enter topic or focus area..." style="flex: 1; padding: 8px 12px; font-size: 0.9rem;">
+              <input type="number" id="aiCountInput" class="form-control" value="3" min="1" max="10" style="width: 70px; padding: 8px 10px; font-size: 0.9rem;" title="Number of questions">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="file" id="aiFileInput" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx" style="flex: 1; padding: 6px; font-size: 0.85rem; background: var(--bg-dark);">
+              <button type="button" class="btn-primary" style="background: var(--info); color: #0f172a; white-space: nowrap; padding: 8px 14px; font-size: 0.9rem;" onclick="generateAIQuestions()">
+                <i class="fa-solid fa-bolt"></i> Generate from File/Topic
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div style="margin: 20px 0 10px;">
           <h4 style="font-size: 1rem; color: var(--primary);">Questions List</h4>
           <p style="font-size: 0.8rem; color: var(--text-muted);">Check one or more correct options for each question below.</p>
@@ -839,6 +858,7 @@
     let globalSubmissions = [];
     let passFailChartInstance = null;
     let scoreDistChartInstance = null;
+    const API_BASE = 'https://edutest-0y0z.onrender.com';
 
     window.activateSection = function(targetSectionId, btnElement) {
       document.querySelectorAll('.tab-view').forEach(view => {
@@ -998,7 +1018,7 @@
       const modal = document.getElementById('createTestModal');
       const questionsContainer = document.getElementById('questionsContainer');
       const numQuestionsInput = document.getElementById('numQuestions');
-
+     
       function setDefaultDates() {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -1009,51 +1029,113 @@
         document.getElementById('testEndDate').value = nextWeek.toISOString().slice(0, 16);
       }
 
-      function generateQuestionCards(count) {
+      function generateQuestionCards(count, aiData = null) {
         questionsContainer.innerHTML = '';
-        const n = Math.max(1, parseInt(count) || 1);
+        const questionsList = aiData && aiData.length > 0 ? aiData : Array.from({ length: Math.max(1, parseInt(count) || 1) }, () => ({}));
 
-        for (let i = 1; i <= n; i++) {
+        questionsList.forEach((q, index) => {
+          const i = index + 1;
           const qCard = document.createElement('div');
           qCard.className = 'question-card';
           qCard.dataset.questionIndex = i;
+          
+          const correctArr = q.correct_option ? q.correct_option.split(',') : [];
+
           qCard.innerHTML = `
             <div class="question-header">Question ${i}</div>
             <div class="form-group">
               <label>Question Text</label>
-              <input type="text" class="form-control q-text" placeholder="Enter question ${i} description..." required>
+              <input type="text" class="form-control q-text" placeholder="Enter question ${i} description..." value="${q.question_text || ''}" required>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div class="form-group">
                 <label>Option A</label>
-                <input type="text" class="form-control opt-a" placeholder="Option A" required>
+                <input type="text" class="form-control opt-a" placeholder="Option A" value="${q.option_a || ''}" required>
               </div>
               <div class="form-group">
                 <label>Option B</label>
-                <input type="text" class="form-control opt-b" placeholder="Option B" required>
+                <input type="text" class="form-control opt-b" placeholder="Option B" value="${q.option_b || ''}" required>
               </div>
               <div class="form-group">
                 <label>Option C</label>
-                <input type="text" class="form-control opt-c" placeholder="Option C" required>
+                <input type="text" class="form-control opt-c" placeholder="Option C" value="${q.option_c || ''}" required>
               </div>
               <div class="form-group">
                 <label>Option D</label>
-                <input type="text" class="form-control opt-d" placeholder="Option D" required>
+                <input type="text" class="form-control opt-d" placeholder="Option D" value="${q.option_d || ''}" required>
               </div>
             </div>
             <div class="form-group">
               <label style="color: var(--primary); font-weight: 600;">Correct Answer(s) (Select all that apply):</label>
               <div class="msq-checkbox-group">
-                <label><input type="checkbox" name="correct_${i}" value="A"> Option A</label>
-                <label><input type="checkbox" name="correct_${i}" value="B"> Option B</label>
-                <label><input type="checkbox" name="correct_${i}" value="C"> Option C</label>
-                <label><input type="checkbox" name="correct_${i}" value="D"> Option D</label>
+                <label><input type="checkbox" name="correct_${i}" value="A" ${correctArr.includes('A') ? 'checked' : ''}> Option A</label>
+                <label><input type="checkbox" name="correct_${i}" value="B" ${correctArr.includes('B') ? 'checked' : ''}> Option B</label>
+                <label><input type="checkbox" name="correct_${i}" value="C" ${correctArr.includes('C') ? 'checked' : ''}> Option C</label>
+                <label><input type="checkbox" name="correct_${i}" value="D" ${correctArr.includes('D') ? 'checked' : ''}> Option D</label>
               </div>
             </div>
           `;
           questionsContainer.appendChild(qCard);
+        });
+
+        if (aiData && aiData.length > 0) {
+          numQuestionsInput.value = aiData.length;
         }
       }
+
+      window.generateAIQuestions = async function() {
+        const topicInput = document.getElementById('aiTopicInput');
+        const countInput = document.getElementById('aiCountInput');
+        const fileInput = document.getElementById('aiFileInput');
+        
+        const topic = topicInput.value.trim();
+        const count = parseInt(countInput.value) || 3;
+        const file = fileInput.files[0];
+
+        if (!topic && !file) {
+          alert('Please provide either a topic or upload a study material file.');
+          return;
+        }
+
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Generating...`;
+        btn.disabled = true;
+
+        try {
+          const formData = new FormData();
+          formData.append('topic', topic);
+          formData.append('count', count);
+          if (file) {
+            formData.append('materialFile', file);
+          }
+
+          const res = await fetch(`${API_BASE}/api/faculty/generate-ai-questions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+
+          const resData = await res.json();
+          if (!res.ok) throw new Error(resData.error || 'Failed to generate questions');
+
+          if (resData.questions && resData.questions.length > 0) {
+            generateQuestionCards(resData.questions.length, resData.questions);
+            alert(`Successfully generated ${resData.questions.length} questions from your material using Gemini AI!`);
+            topicInput.value = '';
+            fileInput.value = '';
+          } else {
+            alert('AI returned empty questions. Try another document or topic.');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      };
 
       document.querySelectorAll('.openModalTrigger').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1108,7 +1190,7 @@
 
       window.loadData = async function() {
         try {
-          const statsRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/stats', {
+          const statsRes = await fetch(`${API_BASE}/api/faculty/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (statsRes.ok) {
@@ -1118,7 +1200,7 @@
             document.getElementById('totalSubmissions').textContent = stats.totalSubmissions ?? 0;
           }
 
-          const testsRes = await fetch('https://edutest-0y0z.onrender.com/api/student/tests', {
+          const testsRes = await fetch(`${API_BASE}/api/student/tests`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (testsRes.ok) {
@@ -1156,7 +1238,7 @@
             }
           }
 
-          const studentsRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/students', {
+          const studentsRes = await fetch(`${API_BASE}/api/faculty/students`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (studentsRes.ok) {
@@ -1181,7 +1263,7 @@
             }
           }
 
-          const subRes = await fetch('https://edutest-0y0z.onrender.com/api/faculty/reports', {
+          const subRes = await fetch(`${API_BASE}/api/faculty/reports`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (subRes.ok) {
@@ -1199,7 +1281,7 @@
         if (!confirmed) return;
 
         try {
-          const res = await fetch(`https://edutest-0y0z.onrender.com/api/faculty/tests/${testId}`, {
+          const res = await fetch(`${API_BASE}/api/faculty/tests/${testId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -1266,7 +1348,7 @@
         if (!confirmAction) return;
 
         try {
-          const res = await fetch(`https://edutest-0y0z.onrender.com/api/faculty/submissions/${submissionId}/reset`, {
+          const res = await fetch(`${API_BASE}/api/faculty/submissions/${submissionId}/reset`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -1285,7 +1367,7 @@
 
       window.loadUserProfile = async function() {
         try {
-          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
+          const res = await fetch(`${API_BASE}/api/user/profile`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const user = await res.json();
@@ -1313,7 +1395,7 @@
         };
 
         try {
-          const res = await fetch('https://edutest-0y0z.onrender.com/api/user/profile', {
+          const res = await fetch(`${API_BASE}/api/user/profile`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -1378,7 +1460,7 @@
         };
 
         try {
-          const res = await fetch('https://edutest-0y0z.onrender.com/api/faculty/tests', {
+          const res = await fetch(`${API_BASE}/api/faculty/tests`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1388,7 +1470,7 @@
           });
 
           if (res.ok) {
-            alert(`Assessment created with scheduled window and ${questionsPayload.length} MSQ question(s)!`);
+            alert(`Assessment created with scheduled window and ${questionsPayload.length} question(s)!`);
             modal.style.display = 'none';
             document.getElementById('newTestForm').reset();
             questionsContainer.innerHTML = '';
