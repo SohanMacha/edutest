@@ -16,7 +16,7 @@ app.use(express.json());
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Database connection
+// Database connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -126,7 +126,7 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// AI Question Generator Endpoint with File/Document Support
+// AI Question Generator Endpoint with File Upload & Multi-Model Fallback
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
     const { topic, count = 3 } = req.body;
@@ -154,10 +154,28 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: contents,
-    });
+    // Multi-model fallback loop to automatically handle capacity limits or version updates
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+    let response = null;
+    let lastError = null;
+
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Trying Gemini model: ${modelName}`);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: contents,
+        });
+        break; // Success! Exit loop
+      } catch (modelErr) {
+        console.warn(`Model ${modelName} failed or unavailable:`, modelErr.message);
+        lastError = modelErr;
+      }
+    }
+
+    if (!response) {
+      throw new Error(`All AI models failed. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
+    }
 
     if (file && file.path) {
       fs.unlink(file.path, () => {});
