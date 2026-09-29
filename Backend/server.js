@@ -155,7 +155,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     contents.push(prompt);
 
     // Multi-model fallback loop to automatically handle capacity limits or version updates
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash'];
     let response = null;
     let lastError = null;
 
