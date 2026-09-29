@@ -267,6 +267,23 @@ app.get('/api/student/tests', authenticateToken, async (req, res) => {
   }
 });
 
+// Get Student's Own Results History
+app.get('/api/student/results', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT r.id as submission_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
+             t.title as test_title
+      FROM results r
+      JOIN tests t ON r.test_id = t.id
+      WHERE r.student_id = ?
+      ORDER BY r.created_at DESC
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/tests/:testId/questions', authenticateToken, async (req, res) => {
   try {
     const [questions] = await pool.query(
