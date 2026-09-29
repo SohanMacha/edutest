@@ -442,7 +442,7 @@
         border: 1px solid var(--border-color);
         padding: 10px 16px;
         border-radius: 10px;
-        width: 260px;
+        width: 240px;
       }
 
       .search-box input {
@@ -818,9 +818,9 @@
       <section class="panel-card">
         <div class="table-toolbar">
           <h3><i class="fa-solid fa-square-poll-vertical"></i> Assessment Submissions & Integrity Report</h3>
-          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <!-- TEST SELECTOR FOR INDIVIDUAL CSV EXPORT -->
-            <select id="exportTestSelect" class="form-control" style="width: 210px; padding: 9px 12px; font-size: 0.85rem;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <!-- TEST SELECTOR DROPDOWN FOR INDIVIDUAL EXPORTS -->
+            <select id="exportTestSelect" class="form-control" style="width: 200px; padding: 9px 12px; font-size: 0.85rem;">
               <option value="all">📝 All Tests Combined</option>
             </select>
 
@@ -828,7 +828,7 @@
               <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
               <input type="text" id="searchInput" placeholder="Search student, roll...">
             </div>
-            
+
             <button class="btn-export" id="exportCsvBtn">
               <i class="fa-solid fa-file-excel"></i> Export CSV
             </button>
@@ -1297,7 +1297,7 @@
 
       function renderSubmissions(list) {
         const subBody = document.getElementById('submissionsTableBody');
-        if (list.length === 0) {
+        if (!list || list.length === 0) {
           subBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No submissions found.</td></tr>`;
           return;
         }
@@ -1305,9 +1305,9 @@
         subBody.innerHTML = list.map(s => `
           <tr>
             <td><strong>${s.roll_number || 'N/A'}</strong></td>
-            <td><strong>${s.student_name}</strong><br><small style="color: var(--text-muted);">${s.student_email}</small></td>
-            <td>${s.test_title}</td>
-            <td>${s.score} /${s.total_marks}</td>
+            <td><strong>${s.student_name || 'Student'}</strong><br><small style="color: var(--text-muted);">${s.student_email || ''}</small></td>
+            <td>${s.test_title || 'Test'}</td>
+            <td>${s.score} / ${s.total_marks}</td>
             <td><strong>${s.percentage}%</strong></td>
             <td>
               ${s.warnings_count > 0 
@@ -1320,7 +1320,7 @@
               }
             </td>
             <td>
-              <button class="btn-retest" onclick="allowRetake(${s.submission_id}, '${escape(s.student_name)}')">
+              <button class="btn-retest" onclick="allowRetake(${s.submission_id}, '${(s.student_name || 'Student').replace(/'/g, "\\'")}')">
                 <i class="fa-solid fa-rotate-right"></i> Allow Re-test
               </button>
             </td>
@@ -1357,7 +1357,7 @@
             const overviewBody = document.getElementById('overviewTestBody');
             const allBody = document.getElementById('allAssessmentsTableBody');
 
-            if (tests.length === 0) {
+            if (!tests || tests.length === 0) {
               overviewBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
               allBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
             } else {
@@ -1378,7 +1378,7 @@
                   <td>${new Date(t.start_date).toLocaleString()}</td>
                   <td>${new Date(t.end_date).toLocaleString()}</td>
                   <td>
-                    <button class="btn-danger" onclick="deleteAssessment(${t.id}, '${escape(t.title)}')">
+                    <button class="btn-danger" onclick="deleteAssessment(${t.id}, '${(t.title || '').replace(/'/g, "\\'")}')">
                       <i class="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
@@ -1395,7 +1395,7 @@
             document.getElementById('studentCountLabel').textContent = `Total Enrolled: ${students.length}`;
             const studentsBody = document.getElementById('studentsTableBody');
 
-            if (students.length === 0) {
+            if (!students || students.length === 0) {
               studentsBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No students registered yet.</td></tr>`;
             } else {
               studentsBody.innerHTML = students.map(st => `
@@ -1405,7 +1405,7 @@
                   <td>${st.email}</td>
                   <td>${st.phone || 'N/A'}</td>
                   <td>${st.department || 'N/A'}</td>
-                  <td>${st.division_batch \vert{}\vert{} 'N/A'} (${st.semester || 'N/A'})</td>
+                  <td>${st.division_batch || 'N/A'} (${st.semester || 'N/A'})</td>
                   <td><span style="color: var(--info); font-weight: 600;">${st.tests_taken} test(s)</span></td>
                 </tr>
               `).join('');
@@ -1423,10 +1423,10 @@
         } catch (err) {
           console.error(err);
         }
-      }
+      };
 
       window.deleteAssessment = async function(testId, title) {
-        const confirmed = confirm(`Are you sure you want to delete "${unescape(title)}"? This will also clear all questions and student submissions linked to it.`);
+        const confirmed = confirm(`Are you sure you want to delete "${title}"? This will also clear all questions and student submissions linked to it.`);
         if (!confirmed) return;
 
         try {
@@ -1504,7 +1504,7 @@
       });
 
       window.allowRetake = async function(submissionId, studentName) {
-        const confirmAction = confirm(`Are you sure you want to allow ${unescape(studentName)} to retake this test? This will delete their previous attempt.`);
+        const confirmAction = confirm(`Are you sure you want to allow ${studentName} to retake this test? This will delete their previous attempt.`);
         if (!confirmAction) return;
 
         try {
