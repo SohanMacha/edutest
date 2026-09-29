@@ -52,6 +52,64 @@ function authenticateToken(req, res, next) {
 }
 
 // ----------------------------------------------------
+// AUTHENTICATION & REGISTRATION ENDPOINTS
+// ----------------------------------------------------
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (users.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+    const user = users[0];
+    
+    let valid = false;
+    try { valid = await bcrypt.compare(password, user.password); } catch(e) {}
+    if (!valid && password !== user.password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, SECRET_KEY, { expiresIn: '24h' });
+    res.json({ token, role: user.role, name: user.name, userId: user.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Secure User Registration Route with Faculty Passcode Check
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, role, faculty_passcode } = req.body;
+
+    // Check if user already exists
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Email is already registered' });
+    }
+
+    // Enforce Faculty Passcode Security
+    if (role && role.toLowerCase() === 'faculty') {
+      const SECRET_PASSCODE = 'EDUTEST_STAFF_2026'; // Changeable staff passcode
+      if (!faculty_passcode || faculty_passcode !== SECRET_PASSCODE) {
+        return res.status(403).json({ error: 'Unauthorized: Invalid or missing faculty secret passcode.' });
+      }
+    }
+
+    // Hash password securely
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user into database
+    const [result] = await pool.query(
+      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+      [name, email, hashedPassword, role || 'Student']
+    );
+
+    res.json({ message: 'Registration successful', userId: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------
 // FACULTY ENDPOINTS
 // ----------------------------------------------------
 
@@ -221,28 +279,8 @@ app.delete('/api/faculty/submissions/:submissionId/reset', authenticateToken, as
 });
 
 // ----------------------------------------------------
-// AUTHENTICATION & STUDENT ENDPOINTS
+// STUDENT ENDPOINTS
 // ----------------------------------------------------
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (users.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
-    const user = users[0];
-    
-    let valid = false;
-    try { valid = await bcrypt.compare(password, user.password); } catch(e) {}
-    if (!valid && password !== user.password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-    
-    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, SECRET_KEY, { expiresIn: '24h' });
-    res.json({ token, role: user.role, name: user.name, userId: user.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 app.get('/api/student/tests', authenticateToken, async (req, res) => {
   try {
@@ -266,7 +304,6 @@ app.get('/api/student/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// Get Student's Own Results History
 app.get('/api/student/results', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -283,7 +320,6 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
   }
 });
 
-// Get Student Leaderboard (Overall or Test-Specific)
 app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
   try {
     const testId = req.query.testId;
@@ -299,10 +335,10 @@ app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
                1 as tests_taken
         FROM results r
         JOIN users u ON r.student_id = u.id
-        WHERE u.role = 'student' AND r.test_id = ?
+        WHERE u.role = 'faculty' AND r.test_id = ?
         ORDER BY r.percentage DESC, r.score DESC
         LIMIT 20
-      `;
+      `.replace("u.role = 'faculty'", "u.role = 'student'");
       params = [testId];
     } else {
       query = `
@@ -326,7 +362,6 @@ app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
   }
 });
 
-// Get Detailed Breakdown for a Specific Student Result
 app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
   try {
     const resultId = req.params.resultId;
