@@ -438,6 +438,11 @@
           </button>
         </li>
         <li>
+          <button type="button" class="nav-item" onclick="switchStudentSection('tabLeaderboard', this); loadLeaderboard();">
+            <i class="fa-solid fa-trophy"></i> Leaderboard
+          </button>
+        </li>
+        <li>
           <button type="button" class="nav-item" onclick="switchStudentSection('tabProfile', this); loadStudentProfile();">
             <i class="fa-solid fa-id-card"></i> Student Profile
           </button>
@@ -499,7 +504,30 @@
       </div>
     </section>
 
-    <!-- SECTION 3: STUDENT PROFILE -->
+    <!-- SECTION 3: LEADERBOARD -->
+    <section id="tabLeaderboard" class="student-view" style="display: none;">
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-trophy" style="color: var(--warning);"></i> Student Leaderboard</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Top performing students ranked by overall average percentage and accumulated score.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student Name</th>
+              <th>Department</th>
+              <th>Tests Taken</th>
+              <th>Average Percentage</th>
+              <th>Total Score</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTableBody">
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading leaderboard...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 4: STUDENT PROFILE -->
     <section id="tabProfile" class="student-view" style="display: none;">
       <div class="panel-card" style="max-width: 680px;">
         <h3><i class="fa-solid fa-user-graduate"></i> My Academic Profile</h3>
@@ -651,6 +679,9 @@
       } else if (sectionId === 'tabHistory') {
         document.getElementById('studentHeading').textContent = 'My Assessment Performance';
         document.getElementById('studentSubheading').textContent = 'View your scores, review answers, and download official PDF marksheets';
+      } else if (sectionId === 'tabLeaderboard') {
+        document.getElementById('studentHeading').textContent = 'Student Leaderboard';
+        document.getElementById('studentSubheading').textContent = 'Top performing students ranked across all completed assessments';
       } else {
         document.getElementById('studentHeading').textContent = 'My Academic Profile';
         document.getElementById('studentSubheading').textContent = 'Review and modify your registered academic records';
@@ -954,6 +985,42 @@
           `).join('');
         } catch (err) {
           console.error(err);
+        }
+      };
+
+      window.loadLeaderboard = async function() {
+        try {
+          const res = await fetch(`${API_BASE}/api/student/leaderboard`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const leaders = await res.json();
+          const tbody = document.getElementById('leaderboardTableBody');
+
+          if (!leaders || leaders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No leaderboard records available yet.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = leaders.map((l, index) => {
+            let rankBadge = `#${index + 1}`;
+            if (index === 0) rankBadge = '🥇 1st';
+            else if (index === 1) rankBadge = '🥈 2nd';
+            else if (index === 2) rankBadge = '🥉 3rd';
+
+            return `
+              <tr>
+                <td><strong>${rankBadge}</strong></td>
+                <td>${l.name}</td>
+                <td>${l.department || 'N/A'}</td>
+                <td>${l.tests_taken}</td>
+                <td><strong style="color: var(--primary);">${l.avg_percentage}%</strong></td>
+                <td>${l.total_score}</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error(err);
+          document.getElementById('leaderboardTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Failed to load leaderboard.</td></tr>`;
         }
       };
 

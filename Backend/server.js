@@ -283,6 +283,27 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
   }
 });
 
+// Get Student Leaderboard
+app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT u.name, u.roll_number, u.department, 
+             SUM(r.score) as total_score, 
+             ROUND(AVG(r.percentage), 1) as avg_percentage,
+             COUNT(r.id) as tests_taken
+      FROM results r
+      JOIN users u ON r.student_id = u.id
+      WHERE u.role = 'student'
+      GROUP BY u.id, u.name, u.roll_number, u.department
+      ORDER BY avg_percentage DESC, total_score DESC
+      LIMIT 20
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get Detailed Breakdown for a Specific Student Result
 app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => {
   try {
