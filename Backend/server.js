@@ -179,6 +179,7 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
+// AI Question Generator Endpoint using stable gemini-2.5-flash
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
     const { topic, count = 3 } = req.body;
@@ -206,27 +207,13 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
-    let response = null;
-    let lastError = null;
+    const modelName = 'gemini-2.5-flash';
+    console.log(`Using Gemini model: ${modelName}`);
 
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Trying Gemini model: ${modelName}`);
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: contents,
-        });
-        break; 
-      } catch (modelErr) {
-        console.warn(`Model ${modelName} failed or unavailable:`, modelErr.message);
-        lastError = modelErr;
-      }
-    }
-
-    if (!response) {
-      throw new Error(`All AI models failed. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
-    }
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: contents,
+    });
 
     if (file && file.path) {
       fs.unlink(file.path, () => {});
@@ -245,6 +232,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     if (req.file && req.file.path) {
       fs.unlink(req.file.path, () => {});
     }
+    console.error('AI Document Generation Error:', err);
     res.status(500).json({ error: 'Failed to generate questions from file: ' + err.message });
   }
 });
