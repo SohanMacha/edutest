@@ -207,7 +207,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelName = 'gemini-2.5-flash';
+    const modelName = 'gemini-3.8-flash';
     console.log(`Using Gemini model: ${modelName}`);
 
     const response = await ai.models.generateContent({
