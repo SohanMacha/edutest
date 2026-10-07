@@ -206,18 +206,20 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
     let response = null;
     let lastError = null;
 
     for (const modelName of modelsToTry) {
       try {
+        console.log(`Trying Gemini model: ${modelName}`);
         response = await ai.models.generateContent({
           model: modelName,
           contents: contents,
         });
         break; 
       } catch (modelErr) {
+        console.warn(`Model ${modelName} failed or unavailable:`, modelErr.message);
         lastError = modelErr;
       }
     }
