@@ -213,7 +213,8 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     contents.push(prompt);
 
     // Use current active models supported by the API
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.1-pro-preview'];
+    // Use stable models with active free tier quotas
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro'];
     let response = null;
     let lastError = null;
 
@@ -228,7 +229,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
         lastError = modelErr;
       }
     }
-
+    
     if (!response || !response.text) {
       throw new Error(`All AI models failed. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
     }
