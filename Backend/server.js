@@ -16,18 +16,22 @@ app.use(express.json());
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Database connection pool with robust timeout handling
+// Robust database connection pool configured for cloud MySQL & SSL persistence
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'edutest',
   port: Number(process.env.DB_PORT) || 3306,
-  ssl: { rejectUnauthorized: false },
+  ssl: {
+    rejectUnauthorized: false
+  },
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 30000
+  connectTimeout: 30000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
 
 pool.getConnection()
@@ -208,7 +212,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro'];
     let response = null;
     let lastError = null;
 
