@@ -212,7 +212,8 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro'];
+    // Use current active models supported by the API
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.1-pro-preview'];
     let response = null;
     let lastError = null;
 
