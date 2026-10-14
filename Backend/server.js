@@ -179,7 +179,7 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// AI Question Generator Endpoint using stable gemini-2.5-flash
+// AI Question Generator with Bulletproof Fallback
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
     const { topic, count = 3 } = req.body;
@@ -207,13 +207,27 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelName = 'gemini-3.8-flash';
-    console.log(`Using Gemini model: ${modelName}`);
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.5-flash'];
+    let response = null;
+    let lastError = null;
 
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: contents,
-    });
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Trying Gemini model: ${modelName}`);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: contents,
+        });
+        if (response && response.text) break;
+      } catch (modelErr) {
+        console.warn(`Model ${modelName} failed:`, modelErr.message);
+        lastError = modelErr;
+      }
+    }
+
+    if (!response || !response.text) {
+      throw new Error(`All AI models failed. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
+    }
 
     if (file && file.path) {
       fs.unlink(file.path, () => {});
@@ -233,7 +247,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
       fs.unlink(req.file.path, () => {});
     }
     console.error('AI Document Generation Error:', err);
-    res.status(500).json({ error: 'Failed to generate questions from file: ' + err.message });
+    res.status(500).json({ error: 'Failed to generate questions: ' + err.message });
   }
 });
 
@@ -304,7 +318,6 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
 app.get('/api/student/leaderboard', authenticateToken, async (req, res) => {
   try {
     const testId = req.query.testId;
-
     let query = '';
     let params = [];
 
