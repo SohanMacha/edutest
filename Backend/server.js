@@ -16,7 +16,7 @@ app.use(express.json());
 const SECRET_KEY = process.env.JWT_SECRET || 'edutest_super_secret_key_2026';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Database connection pool
+// Database connection pool with robust timeout handling
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -27,7 +27,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 20000
+  connectTimeout: 30000
 });
 
 pool.getConnection()
@@ -71,7 +71,8 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, SECRET_KEY, { expiresIn: '24h' });
     res.json({ token, role: user.role, name: user.name, userId: user.id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Login error:', err.message);
+    res.status(500).json({ error: 'Database error during login: ' + err.message });
   }
 });
 
@@ -179,7 +180,7 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// AI Question Generator with Bulletproof Fallback
+// AI Question Generator Endpoint (using stable gemini-2.5-flash with fallback)
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
     const { topic, count = 3 } = req.body;
@@ -207,20 +208,18 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.5-flash'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'];
     let response = null;
     let lastError = null;
 
     for (const modelName of modelsToTry) {
       try {
-        console.log(`Trying Gemini model: ${modelName}`);
         response = await ai.models.generateContent({
           model: modelName,
           contents: contents,
         });
         if (response && response.text) break;
       } catch (modelErr) {
-        console.warn(`Model ${modelName} failed:`, modelErr.message);
         lastError = modelErr;
       }
     }
@@ -246,7 +245,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     if (req.file && req.file.path) {
       fs.unlink(req.file.path, () => {});
     }
-    console.error('AI Document Generation Error:', err);
+    console.error('AI Generation Error:', err.message);
     res.status(500).json({ error: 'Failed to generate questions: ' + err.message });
   }
 });
