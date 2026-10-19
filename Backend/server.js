@@ -382,21 +382,32 @@ app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => 
       [resultRecord.test_id]
     );
 
-    let studentAnswers = {};
+    let rawAnswers = {};
     try {
       if (resultRecord.answers) {
-        studentAnswers = JSON.parse(resultRecord.answers);
+        rawAnswers = JSON.parse(resultRecord.answers);
       }
     } catch (e) {
-      studentAnswers = {};
+      rawAnswers = {};
     }
+
+    // NORMALIZE ANSWERS: Map both by Question ID and by 0-based array index
+    // This ensures frontend review scripts looking up by ID or index will always find the answer.
+    const normalizedAnswers = {};
+    questions.forEach((q, index) => {
+      const studentAns = rawAnswers[q.id] || rawAnswers[index] || rawAnswers[String(q.id)] || rawAnswers[String(index)];
+      if (studentAns !== undefined) {
+        normalizedAnswers[q.id] = studentAns;
+        normalizedAnswers[index] = studentAns;
+      }
+    });
 
     res.json({
       score: resultRecord.score,
       total_marks: resultRecord.total_marks,
       percentage: resultRecord.percentage,
       questions: questions,
-      studentAnswers: studentAnswers
+      studentAnswers: normalizedAnswers
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
