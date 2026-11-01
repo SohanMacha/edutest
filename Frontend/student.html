@@ -21,6 +21,20 @@
       --info: #38bdf8;
     }
 
+    /* Light Theme Color Overrides */
+    body.light-mode {
+      --bg-dark: #f1f5f9;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-hover: rgba(16, 185, 129, 0.4);
+    }
+
+    body.light-mode .aurora-bg {
+      opacity: 0.4;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -111,10 +125,14 @@
       z-index: 10;
     }
 
+    body.light-mode .sidebar {
+      background: rgba(255, 255, 255, 0.75);
+    }
+
     .brand {
       font-size: 1.4rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 12px;
@@ -207,6 +225,10 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
+    body.light-mode .topbar {
+      background: rgba(255, 255, 255, 0.65);
+    }
+
     .user-profile {
       display: flex;
       align-items: center;
@@ -259,11 +281,14 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    body.light-mode .test-item {
+      background: rgba(241, 245, 249, 0.85);
+    }
+
     .test-item:hover {
       transform: translateY(-5px);
       border-color: var(--border-hover);
       box-shadow: 0 15px 30px -10px rgba(16, 185, 129, 0.15);
-      background: rgba(15, 23, 42, 0.9);
     }
 
     .test-title {
@@ -375,6 +400,11 @@
       font-size: 0.95rem;
     }
 
+    body.light-mode .form-control {
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-main);
+    }
+
     .form-control:focus {
       outline: none;
       border-color: var(--primary);
@@ -448,6 +478,10 @@
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
+    }
+
+    body.light-mode .option-label {
+      background: rgba(241, 245, 249, 0.8);
     }
 
     .option-label:hover {
@@ -586,6 +620,9 @@
       </div>
 
       <div class="user-profile">
+        <button type="button" id="themeToggleBtn" class="btn-review" style="padding: 10px 12px; border-radius: 50%; cursor: pointer;" title="Toggle Theme">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
         <div class="avatar" id="avatarLetter">S</div>
         <div style="display: flex; flex-direction: column;">
           <strong id="studentName">Student User</strong>
@@ -826,6 +863,29 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Theme Switcher Initialization
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      
+      const savedTheme = localStorage.getItem('edutest_theme');
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        themeIcon.className = 'fa-solid fa-sun';
+      }
+
+      themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        
+        if (isLight) {
+          localStorage.setItem('edutest_theme', 'light');
+          themeIcon.className = 'fa-solid fa-sun';
+        } else {
+          localStorage.setItem('edutest_theme', 'dark');
+          themeIcon.className = 'fa-solid fa-moon';
+        }
+      });
+
       const token = localStorage.getItem('token');
       const role = localStorage.getItem('role');
 
@@ -1252,7 +1312,6 @@
         doc.save(`${(studentDetails.name || 'Student').replace(/\s+/g, '_')}_Marksheet.pdf`);
       };
 
-      // FIXED openReviewModal with Robust Answer Fallbacks & Normalization
       window.openReviewModal = async function(resultId) {
         const modal = document.getElementById('reviewModal');
         const container = document.getElementById('reviewContentContainer');
@@ -1276,7 +1335,6 @@
               <div><small style="color: #94a3b8;">Percentage</small><br><strong style="font-size: 1.2rem; color: #38bdf8;">${data.percentage}%</strong></div>
             </div>
           ` + data.questions.map((q, idx) => {
-            // Check all potential keys
             const rawAns = data.studentAnswers[q.id] 
                         || data.studentAnswers[String(q.id)] 
                         || data.studentAnswers[idx] 
