@@ -215,7 +215,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
     // Use current active models supported by the API
     // Use stable models with active free tier quotas
     // Use current active production models to permanently prevent 404/deprecation errors
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.1-pro-preview'];
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
     let response = null;
     let lastError = null;
 
