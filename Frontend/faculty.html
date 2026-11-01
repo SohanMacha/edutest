@@ -648,6 +648,11 @@
           </button>
         </li>
         <li>
+          <button type="button" class="nav-item" onclick="activateSection('tabLeaderboard', this); loadFacultyLeaderboard();">
+            <i class="fa-solid fa-trophy"></i> Leaderboard
+          </button>
+        </li>
+        <li>
           <button type="button" class="nav-item" onclick="activateSection('tabProfile', this); loadUserProfile();">
             <i class="fa-solid fa-user-gear"></i> My Profile
           </button>
@@ -854,7 +859,40 @@
       </section>
     </div>
 
-    <!-- TAB 5: PROFILE -->
+    <!-- TAB 5: LEADERBOARD -->
+    <div id="tabLeaderboard" class="tab-view" style="display: none;">
+      <section class="panel-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3><i class="fa-solid fa-trophy" style="color: var(--warning);"></i> Student Performance Leaderboard</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">View top-performing students across all assessments or filter by a specific test.</p>
+          </div>
+          <div>
+            <select id="facultyLeaderboardFilter" class="form-control" style="width: 240px;" onchange="loadFacultyLeaderboard()">
+              <option value="all">🏆 Overall Leaderboard</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student Name</th>
+              <th>Roll No</th>
+              <th>Department</th>
+              <th>Tests Taken</th>
+              <th>Average Percentage</th>
+              <th>Total Score</th>
+            </tr>
+          </thead>
+          <tbody id="facultyLeaderboardTableBody">
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading leaderboard...</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- TAB 6: PROFILE -->
     <div id="tabProfile" class="tab-view" style="display: none;">
       <section class="panel-card" style="max-width: 680px;">
         <h3><i class="fa-solid fa-id-badge"></i> Faculty Institutional Profile</h3>
@@ -988,7 +1026,6 @@
   </div>
 
   <script>
-    // Mouse-following cursor light tracker
     const cursorGlow = document.getElementById('cursorGlow');
     window.addEventListener('mousemove', (e) => {
       cursorGlow.style.left = `${e.clientX}px`;
@@ -1033,6 +1070,10 @@
         tabReports: {
           title: 'Submission & Marks Reports',
           sub: 'Review student performance, integrity violations, and export grade sheets'
+        },
+        tabLeaderboard: {
+          title: 'Student Performance Leaderboard',
+          sub: 'Top performing students ranked across all or specific completed assessments'
         },
         tabProfile: {
           title: 'Faculty Institutional Profile',
@@ -1336,7 +1377,6 @@
         }
       }
 
-      // Helper function to filter submissions based on dropdown test selection & search query
       function getFilteredSubmissions() {
         const selectedTestId = document.getElementById('exportTestSelect').value;
         const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -1357,15 +1397,70 @@
         return filtered;
       }
 
-      // Live filter table when test dropdown changes
       document.getElementById('exportTestSelect').addEventListener('change', () => {
         renderSubmissions(getFilteredSubmissions());
       });
 
-      // Live filter table when typing in search box
       document.getElementById('searchInput').addEventListener('input', () => {
         renderSubmissions(getFilteredSubmissions());
       });
+
+      // Leaderboard functionality for faculty
+      window.loadFacultyLeaderboard = async function() {
+        try {
+          const filterSelect = document.getElementById('facultyLeaderboardFilter');
+          const selectedTestId = filterSelect ? filterSelect.value : 'all';
+
+          if (filterSelect && filterSelect.options.length <= 1) {
+            const testsRes = await fetch(`${API_BASE}/api/student/tests`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const tests = await testsRes.json();
+            if (tests && tests.length > 0) {
+              tests.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `📝 ${t.title}`;
+                filterSelect.appendChild(opt);
+              });
+              filterSelect.value = selectedTestId;
+            }
+          }
+
+          const res = await fetch(`${API_BASE}/api/student/leaderboard?testId=${selectedTestId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const leaders = await res.json();
+          const tbody = document.getElementById('facultyLeaderboardTableBody');
+
+          if (!leaders || leaders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No leaderboard records available for this selection yet.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = leaders.map((l, index) => {
+            let rankBadge = `#${index + 1}`;
+            if (index === 0) rankBadge = '🥇 1st';
+            else if (index === 1) rankBadge = '🥈 2nd';
+            else if (index === 2) rankBadge = '🥉 3rd';
+
+            return `
+              <tr>
+                <td><strong>${rankBadge}</strong></td>
+                <td>${l.name}</td>
+                <td>${l.roll_number || 'N/A'}</td>
+                <td>${l.department || 'N/A'}</td>
+                <td>${selectedTestId === 'all' ? (l.tests_taken || 1) : '1'}</td>
+                <td><strong style="color: var(--primary);">${l.avg_percentage}%</strong></td>
+                <td>${l.total_score}</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          console.error(err);
+          document.getElementById('facultyLeaderboardTableBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Failed to load leaderboard.</td></tr>`;
+        }
+      };
 
       window.loadData = async function() {
         try {
