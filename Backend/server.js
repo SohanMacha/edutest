@@ -382,23 +382,24 @@ app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => 
       [resultRecord.test_id]
     );
 
-    let rawAnswers = {};
+    let parsedAnswers = {};
     try {
-      if (resultRecord.answers) {
-        rawAnswers = JSON.parse(resultRecord.answers);
+      if (typeof resultRecord.answers === 'string') {
+        parsedAnswers = JSON.parse(resultRecord.answers);
+      } else if (typeof resultRecord.answers === 'object' && resultRecord.answers !== null) {
+        parsedAnswers = resultRecord.answers;
       }
     } catch (e) {
-      rawAnswers = {};
+      parsedAnswers = {};
     }
 
-    // NORMALIZE ANSWERS: Map both by Question ID and by 0-based array index
-    // This ensures frontend review scripts looking up by ID or index will always find the answer.
+    // Map answers flexibly so frontend can read them by ID or index
     const normalizedAnswers = {};
-    questions.forEach((q, index) => {
-      const studentAns = rawAnswers[q.id] || rawAnswers[index] || rawAnswers[String(q.id)] || rawAnswers[String(index)];
-      if (studentAns !== undefined) {
-        normalizedAnswers[q.id] = studentAns;
-        normalizedAnswers[index] = studentAns;
+    questions.forEach((q, idx) => {
+      const ans = parsedAnswers[q.id] || parsedAnswers[String(q.id)] || parsedAnswers[idx] || parsedAnswers[String(idx)];
+      if (ans !== undefined) {
+        normalizedAnswers[q.id] = ans;
+        normalizedAnswers[idx] = ans;
       }
     });
 

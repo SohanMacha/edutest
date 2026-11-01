@@ -1276,7 +1276,7 @@
               <div><small style="color: #94a3b8;">Percentage</small><br><strong style="font-size: 1.2rem; color: #38bdf8;">${data.percentage}%</strong></div>
             </div>
           ` + data.questions.map((q, idx) => {
-            // Robust lookup supporting ID, String ID, index, and String index
+            // Check all potential keys
             const rawAns = data.studentAnswers[q.id] 
                         || data.studentAnswers[String(q.id)] 
                         || data.studentAnswers[idx] 
@@ -1317,7 +1317,7 @@
         } catch (err) {
           container.innerHTML = '<p style="color: #ef4444; text-align: center;">Network error loading review data.</p>';
         }
-      };
+      }; 
 
       window.loadStudentProfile = async function() {
         try {
