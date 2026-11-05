@@ -21,7 +21,6 @@
       --info: #38bdf8;
     }
 
-    /* Light Theme Color Overrides */
     body.light-mode {
       --bg-dark: #f1f5f9;
       --card-bg: rgba(255, 255, 255, 0.85);
@@ -301,6 +300,8 @@
       color: var(--text-muted);
       display: flex;
       gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .btn-start {
@@ -649,6 +650,7 @@
           <thead>
             <tr>
               <th>Assessment Title</th>
+              <th>Difficulty</th>
               <th>Score</th>
               <th>Percentage</th>
               <th>Cheat Warnings</th>
@@ -657,7 +659,7 @@
             </tr>
           </thead>
           <tbody id="historyTableBody">
-            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading history...</td></tr>
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading history...</td></tr>
           </tbody>
         </table>
       </div>
@@ -763,7 +765,10 @@
     <section id="examSection">
       <div class="exam-header">
         <div>
-          <h2 id="activeExamTitle">Assessment Title</h2>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h2 id="activeExamTitle">Assessment Title</h2>
+            <span id="activeExamDifficulty"></span>
+          </div>
           <span style="color: var(--text-muted); font-size: 0.85rem;">Notice: One or more options may be correct. Check all applicable answers.</span>
         </div>
         <div class="timer-badge">
@@ -830,6 +835,16 @@
     const MAX_WARNINGS = 3;
     let isExamActive = false;
 
+    function getDifficultyBadge(difficulty) {
+      const diff = difficulty || 'Medium';
+      const styles = {
+        Easy: 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981;',
+        Medium: 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid #f59e0b;',
+        Hard: 'background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444;'
+      };
+      return `<span style="padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; ${styles[diff] || styles.Medium}">${diff}</span>`;
+    }
+
     function shuffleArray(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -863,7 +878,6 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Theme Switcher Initialization
       const themeToggleBtn = document.getElementById('themeToggleBtn');
       const themeIcon = document.getElementById('themeIcon');
       
@@ -922,6 +936,7 @@
 
           testList.innerHTML = tests.map(t => {
             let actionHtml = '';
+            const diff = t.difficulty || 'Medium';
 
             if (t.is_completed > 0) {
               actionHtml = `
@@ -943,7 +958,7 @@
               `;
             } else {
               actionHtml = `
-                <button class="btn-start" onclick="startExam(${t.id}, '${escape(t.title)}', ${t.duration_mins || 15})">
+                <button class="btn-start" onclick="startExam(${t.id}, '${escape(t.title)}', ${t.duration_mins || 15}, '${diff}')">
                   Take Assessment
                 </button>
               `;
@@ -952,8 +967,11 @@
             return `
               <div class="test-item">
                 <div>
-                  <div class="test-title">${t.title}</div>
-                  <div class="test-meta" style="margin-top: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                    <div class="test-title">${t.title}</div>
+                    ${getDifficultyBadge(diff)}
+                  </div>
+                  <div class="test-meta" style="margin-top: 10px;">
                     <span><i class="fa-regular fa-clock"></i> ${t.duration_mins || 15} mins</span>
                     <span><i class="fa-solid fa-calendar-days"></i> Due ${new Date(t.end_date).toLocaleDateString()}</span>
                   </div>
@@ -967,7 +985,7 @@
         }
       }
 
-      window.startExam = async function(testId, title, durationMins) {
+      window.startExam = async function(testId, title, durationMins, difficulty = 'Medium') {
         try {
           const res = await fetch(`${API_BASE}/api/tests/${testId}/questions`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -991,6 +1009,7 @@
           tabSwitchCount = 0;
           isExamActive = true;
           document.getElementById('activeExamTitle').textContent = unescape(title);
+          document.getElementById('activeExamDifficulty').innerHTML = getDifficultyBadge(difficulty);
 
           questionsContainer.innerHTML = randomizedQuestions.map((q, idx) => {
             const options = shuffleArray([
@@ -1007,7 +1026,7 @@
                 ${options.map(opt => `
                   <label class="option-label">
                     <input type="checkbox" name="q_${q.id}" value="${opt.key}">
-                    <span><strong>[${opt.key}]</strong>${opt.text}</span>
+                    <span><strong>[${opt.key}]</strong> ${opt.text}</span>
                   </label>
                 `).join('')}
               </div>
@@ -1142,13 +1161,14 @@
           const tbody = document.getElementById('historyTableBody');
 
           if (!history || history.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No assessments taken yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No assessments taken yet.</td></tr>`;
             return;
           }
 
           tbody.innerHTML = history.map(h => `
             <tr>
               <td><strong>${h.test_title}</strong></td>
+              <td>${getDifficultyBadge(h.test_difficulty)}</td>
               <td>${h.score} / ${h.total_marks}</td>
               <td><strong>${h.percentage}%</strong></td>
               <td>
@@ -1188,7 +1208,7 @@
               tests.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
-                opt.textContent = `📝 ${t.title}`;
+                opt.textContent = `📝 ${t.title} (${t.difficulty || 'Medium'})`;
                 filterSelect.appendChild(opt);
               });
               filterSelect.value = selectedTestId;

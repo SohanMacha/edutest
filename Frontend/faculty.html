@@ -58,7 +58,6 @@
         transition: background-color 0.3s ease, color 0.3s ease;
       }
 
-      /* Live Animated Aurora Background & Mouse Follower */
       .aurora-bg {
         position: fixed;
         inset: 0;
@@ -632,7 +631,6 @@
 
 <body>
 
-  <!-- Live Animated Aurora Background & Mouse Follower -->
   <div class="aurora-bg">
     <div id="cursorGlow"></div>
     <div class="blob blob-1"></div>
@@ -694,7 +692,6 @@
       </div>
 
       <div class="user-profile">
-        <!-- Theme Toggle Button -->
         <button type="button" id="themeToggleBtn" class="btn-review" style="padding: 10px 12px; border-radius: 50%; cursor: pointer; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main);" title="Toggle Theme">
           <i class="fa-solid fa-moon" id="themeIcon"></i>
         </button>
@@ -777,12 +774,13 @@
             <tr>
               <th>Test ID</th>
               <th>Title</th>
+              <th>Difficulty</th>
               <th>Duration</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="overviewTestBody">
-            <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Loading assessments...</td></tr>
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading assessments...</td></tr>
           </tbody>
         </table>
       </section>
@@ -803,6 +801,7 @@
             <tr>
               <th>Test ID</th>
               <th>Title</th>
+              <th>Difficulty</th>
               <th>Duration</th>
               <th>Start Window</th>
               <th>End Deadline</th>
@@ -810,7 +809,7 @@
             </tr>
           </thead>
           <tbody id="allAssessmentsTableBody">
-            <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading assessments...</td></tr>
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading assessments...</td></tr>
           </tbody>
         </table>
       </section>
@@ -849,9 +848,8 @@
         <div class="table-toolbar">
           <h3><i class="fa-solid fa-square-poll-vertical"></i> Assessment Submissions & Integrity Report</h3>
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <!-- TEST SELECTOR DROPDOWN FOR INDIVIDUAL EXPORTS & REAL-TIME TABLE FILTERING -->
             <select id="exportTestSelect" class="form-control" style="width: 200px; padding: 9px 12px; font-size: 0.85rem;">
-              <option value="all">📝 All Tests Combined</option>
+              <option value="all">📊 All Tests Combined</option>
             </select>
 
             <div class="search-box">
@@ -991,17 +989,26 @@
           <input type="text" class="form-control" id="testTitle" placeholder="e.g. Data Structures & Graph Theory" required>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
           <div class="form-group">
-            <label>Duration (in minutes)</label>
+            <label>Duration (mins)</label>
             <input type="number" class="form-control" id="testDuration" value="15" min="1" required>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-layer-group"></i> Difficulty Level</label>
+            <select id="testDifficulty" class="form-control" required>
+              <option value="Easy">🟢 Easy</option>
+              <option value="Medium" selected>🟡 Medium</option>
+              <option value="Hard">🔴 Hard</option>
+            </select>
           </div>
           
           <div class="form-group">
-            <label>Number of Questions</label>
+            <label>Manual Questions</label>
             <div style="display: flex; gap: 8px;">
               <input type="number" class="form-control" id="numQuestions" value="2" min="1" max="50" required>
-              <button type="button" class="btn-primary" style="background: #3b82f6;" id="generateQuestionsBtn">Generate</button>
+              <button type="button" class="btn-primary" style="background: #3b82f6; padding: 11px 14px;" id="generateQuestionsBtn">Set</button>
             </div>
           </div>
         </div>
@@ -1019,7 +1026,7 @@
 
         <!-- AI QUESTION GENERATOR WIDGET WITH FILE UPLOAD -->
         <div style="background: rgba(56, 189, 248, 0.08); border: 1px dashed var(--info); padding: 16px; border-radius: 10px; margin: 16px 0;">
-          <h4 style="color: var(--info); margin-bottom: 6px; font-size: 0.95rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Question Generator (From Text & Files)</h4>
+          <h4 style="color: var(--info); margin-bottom: 6px; font-size: 0.95rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Question Generator (Adapts to Selected Difficulty)</h4>
           <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Type a topic or upload a study material file (PDF, Notes Image, PPT, etc.) for Gemini to analyze.</p>
           
           <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1061,6 +1068,16 @@
     let passFailChartInstance = null;
     let scoreDistChartInstance = null;
     const API_BASE = 'https://edutest-0y0z.onrender.com';
+
+    function getDifficultyBadge(difficulty) {
+      const diff = difficulty || 'Medium';
+      const styles = {
+        Easy: 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981;',
+        Medium: 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid #f59e0b;',
+        Hard: 'background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444;'
+      };
+      return `<span style="padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; ${styles[diff] || styles.Medium}">${diff}</span>`;
+    }
 
     window.activateSection = function(targetSectionId, btnElement) {
       document.querySelectorAll('.tab-view').forEach(view => {
@@ -1202,7 +1219,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Theme Switcher Logic
       const themeToggleBtn = document.getElementById('themeToggleBtn');
       const themeIcon = document.getElementById('themeIcon');
       
@@ -1224,7 +1240,6 @@
           themeIcon.className = 'fa-solid fa-moon';
         }
 
-        // Re-render charts to adjust text and border colors for theme
         if (globalSubmissions.length > 0) {
           updateAnalyticsCharts(globalSubmissions);
         }
@@ -1321,6 +1336,7 @@
         const topicInput = document.getElementById('aiTopicInput');
         const countInput = document.getElementById('aiCountInput');
         const fileInput = document.getElementById('aiFileInput');
+        const difficulty = document.getElementById('testDifficulty').value || 'Medium';
         
         const topic = topicInput.value.trim();
         const count = parseInt(countInput.value) || 3;
@@ -1333,13 +1349,14 @@
 
         const btn = event.target.closest('button');
         const originalText = btn.innerHTML;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Generating...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generating (${difficulty})...`;
         btn.disabled = true;
 
         try {
           const formData = new FormData();
           formData.append('topic', topic);
           formData.append('count', count);
+          formData.append('difficulty', difficulty);
           if (file) {
             formData.append('materialFile', file);
           }
@@ -1357,7 +1374,7 @@
 
           if (resData.questions && resData.questions.length > 0) {
             generateQuestionCards(resData.questions.length, resData.questions);
-            alert(`Successfully generated ${resData.questions.length} questions from your material using Gemini AI!`);
+            alert(`Successfully generated ${resData.questions.length} ${difficulty} question(s) using Gemini AI!`);
             topicInput.value = '';
             fileInput.value = '';
           } else {
@@ -1400,7 +1417,7 @@
           <tr>
             <td><strong>${s.roll_number || 'N/A'}</strong></td>
             <td><strong>${s.student_name || 'Student'}</strong><br><small style="color: var(--text-muted);">${s.student_email || ''}</small></td>
-            <td>${s.test_title || 'Test'}</td>
+            <td>${s.test_title || 'Test'} ${s.test_difficulty ? getDifficultyBadge(s.test_difficulty) : ''}</td>
             <td>${s.score} / ${s.total_marks}</td>
             <td><strong>${s.percentage}%</strong></td>
             <td>
@@ -1425,8 +1442,8 @@
       async function populateExportTestDropdown(tests) {
         const select = document.getElementById('exportTestSelect');
         if (select && tests && tests.length > 0) {
-          select.innerHTML = '<option value="all">📝 All Tests Combined</option>' + 
-            tests.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+          select.innerHTML = '<option value="all">📊 All Tests Combined</option>' + 
+            tests.map(t => `<option value="${t.id}">${t.title} (${t.difficulty || 'Medium'})</option>`).join('');
         }
       }
 
@@ -1458,7 +1475,6 @@
         renderSubmissions(getFilteredSubmissions());
       });
 
-      // Leaderboard functionality for faculty
       window.loadFacultyLeaderboard = async function() {
         try {
           const filterSelect = document.getElementById('facultyLeaderboardFilter');
@@ -1473,7 +1489,7 @@
               tests.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
-                opt.textContent = `📝 ${t.title}`;
+                opt.textContent = `📝 ${t.title} (${t.difficulty || 'Medium'})`;
                 filterSelect.appendChild(opt);
               });
               filterSelect.value = selectedTestId;
@@ -1537,13 +1553,14 @@
             const allBody = document.getElementById('allAssessmentsTableBody');
 
             if (!tests || tests.length === 0) {
-              overviewBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
-              allBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
+              overviewBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
+              allBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No tests created yet.</td></tr>`;
             } else {
               overviewBody.innerHTML = tests.map(t => `
                 <tr>
                   <td>#${t.id}</td>
                   <td><strong>${t.title}</strong></td>
+                  <td>${getDifficultyBadge(t.difficulty)}</td>
                   <td>${t.duration_mins} mins</td>
                   <td><span style="color: var(--primary); font-weight: 600;">Active</span></td>
                 </tr>
@@ -1553,6 +1570,7 @@
                 <tr>
                   <td>#${t.id}</td>
                   <td><strong>${t.title}</strong></td>
+                  <td>${getDifficultyBadge(t.difficulty)}</td>
                   <td>${t.duration_mins} mins</td>
                   <td>${new Date(t.start_date).toLocaleString()}</td>
                   <td>${new Date(t.end_date).toLocaleString()}</td>
@@ -1635,7 +1653,7 @@
         }
 
         const selectedTestId = document.getElementById('exportTestSelect').value;
-        const headers = ['Submission ID', 'Roll Number', 'Student Name', 'Email', 'Assessment Title', 'Score', 'Total Marks', 'Percentage', 'Cheat Warnings'];
+        const headers = ['Submission ID', 'Roll Number', 'Student Name', 'Email', 'Assessment Title', 'Difficulty', 'Score', 'Total Marks', 'Percentage', 'Cheat Warnings'];
         const csvRows = [headers.join(',')];
 
         submissionsToExport.forEach(s => {
@@ -1645,6 +1663,7 @@
             `"${(s.student_name || '').replace(/"/g, '""')}"`,
             `"${(s.student_email || '').replace(/"/g, '""')}"`,
             `"${(s.test_title || '').replace(/"/g, '""')}"`,
+            `"${s.test_difficulty || 'Medium'}"`,
             s.score,
             s.total_marks,
             `${s.percentage}%`,
@@ -1775,6 +1794,7 @@
         const payload = {
           title: document.getElementById('testTitle').value,
           duration_mins: parseInt(document.getElementById('testDuration').value),
+          difficulty: document.getElementById('testDifficulty').value || 'Medium',
           start_date: startDateVal,
           end_date: endDateVal,
           questions: questionsPayload
@@ -1791,7 +1811,7 @@
           });
 
           if (res.ok) {
-            alert(`Assessment created with scheduled window and ${questionsPayload.length} question(s)!`);
+            alert(`Assessment created (${payload.difficulty} difficulty) with ${questionsPayload.length} question(s)!`);
             modal.style.display = 'none';
             document.getElementById('newTestForm').reset();
             questionsContainer.innerHTML = '';

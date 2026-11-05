@@ -147,7 +147,7 @@ app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT r.id as submission_id, r.test_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
-             t.title as test_title, u.name as student_name, u.email as student_email, u.roll_number
+             t.title as test_title, t.difficulty as test_difficulty, u.name as student_name, u.email as student_email, u.roll_number
       FROM results r
       JOIN tests t ON r.test_id = t.id
       JOIN users u ON r.student_id = u.id
@@ -161,11 +161,11 @@ app.get('/api/faculty/reports', authenticateToken, async (req, res) => {
 
 app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   try {
-    const { title, duration_mins, start_date, end_date, questions } = req.body;
+    const { title, duration_mins, difficulty = 'Medium', start_date, end_date, questions } = req.body;
     
     const [testResult] = await pool.query(
-      'INSERT INTO tests (title, duration_mins, start_date, end_date, created_by) VALUES (?, ?, ?, ?, ?)',
-      [title, duration_mins, start_date, end_date, req.user.id]
+      'INSERT INTO tests (title, duration_mins, difficulty, start_date, end_date, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, duration_mins, difficulty, start_date, end_date, req.user.id]
     );
     const testId = testResult.insertId;
 
@@ -184,15 +184,22 @@ app.post('/api/faculty/tests', authenticateToken, async (req, res) => {
   }
 });
 
-// AI Question Generator Endpoint (using stable gemini-2.5-flash with fallback)
+// AI Question Generator Endpoint (with Difficulty Level support)
 app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single('materialFile'), async (req, res) => {
   try {
-    const { topic, count = 3 } = req.body;
+    const { topic, count = 3, difficulty = 'Medium' } = req.body;
     const file = req.file;
 
+    const difficultyDescriptions = {
+      Easy: 'EASY (Focus on fundamental definitions, direct recall, and basic concepts)',
+      Medium: 'MEDIUM (Focus on conceptual understanding, standard engineering applications, and code/logic tracing)',
+      Hard: 'HARD (Focus on complex problem-solving, tricky edge cases, analytical reasoning, and close distractors)'
+    };
+
     let contents = [];
-    let prompt = `Generate exactly ${count} multiple-choice questions based on the provided material and topic: "${topic || 'General document content'}". 
-    Each question must have 4 options (A, B, C, D) and specify the correct option letter (e.g., "A").
+    let prompt = `Generate exactly ${count} multiple-choice questions based on the provided material and topic: "${topic || 'General document content'}".
+    Target Difficulty Level: ${difficultyDescriptions[difficulty] || difficultyDescriptions.Medium}.
+    Each question must match this ${difficulty} difficulty level, have 4 options (A, B, C, D), and specify the correct option letter (e.g., "A").
     You MUST return the response strictly as a JSON array of objects with the following keys:
     - question_text (string)
     - option_a (string)
@@ -212,10 +219,7 @@ app.post('/api/faculty/generate-ai-questions', authenticateToken, upload.single(
 
     contents.push(prompt);
 
-    // Use current active models supported by the API
-    // Use stable models with active free tier quotas
-    // Use current active production models to permanently prevent 404/deprecation errors
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite'];
     let response = null;
     let lastError = null;
 
@@ -309,7 +313,7 @@ app.get('/api/student/results', authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT r.id as submission_id, r.score, r.total_marks, r.percentage, r.warnings_count, r.created_at,
-             t.title as test_title
+             t.title as test_title, t.difficulty as test_difficulty
       FROM results r
       JOIN tests t ON r.test_id = t.id
       WHERE r.student_id = ?
@@ -393,7 +397,6 @@ app.get('/api/student/review/:resultId', authenticateToken, async (req, res) => 
       parsedAnswers = {};
     }
 
-    // Map answers flexibly so frontend can read them by ID or index
     const normalizedAnswers = {};
     questions.forEach((q, idx) => {
       const ans = parsedAnswers[q.id] || parsedAnswers[String(q.id)] || parsedAnswers[idx] || parsedAnswers[String(idx)];
